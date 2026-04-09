@@ -28,17 +28,24 @@ const fd = "'Plus Jakarta Sans',system-ui,sans-serif";
 const fi = "'Inter',system-ui,sans-serif";
 
 // ═══════════════════════════════════════════
-// DATA
+// DATA — 15 Attractions with GYG Affiliate Links
 // ═══════════════════════════════════════════
 const ATT = [
-  { id:"hagia", title:"Hagia Sophia", cat:"Landmark", price:25, dur:"1.5h", rating:4.9, img:"https://images.unsplash.com/photo-1665309197647-4db43d0b2a23?w=600&q=80&fit=crop", badge:"Most booked", skip:true, link:"#" },
-  { id:"basilica", title:"Basilica Cistern", cat:"Museum", price:20, dur:"1h", rating:4.8, img:"https://images.unsplash.com/photo-1709059962757-8d5d32adf9a6?w=600&q=80&fit=crop", badge:"Fast entry", skip:true, link:"#" },
-  { id:"topkapi", title:"Topkapi Palace", cat:"Palace", price:30, dur:"2.5h", rating:4.9, img:"https://images.unsplash.com/photo-1596484552834-6a58f850e0a1?w=600&q=80&fit=crop", badge:"High value", skip:true, link:"#" },
-  { id:"cruise", title:"Bosphorus Cruise", cat:"Experience", price:18, dur:"2h", rating:4.7, img:"https://images.unsplash.com/photo-1512453979798-5ea266f8880c?w=600&q=80&fit=crop", badge:"Sunset pick", skip:false, link:"#" },
-  { id:"hammam", title:"Turkish Bath", cat:"Wellness", price:45, dur:"1.5h", rating:4.8, img:"https://images.unsplash.com/photo-1600334129128-685c5582fd35?w=600&q=80&fit=crop", badge:"Authentic", skip:false, link:"#" },
-  { id:"galata", title:"Galata Tower", cat:"Viewpoint", price:15, dur:"45min", rating:4.6, img:"https://images.unsplash.com/photo-1527838832700-5059252407fa?w=600&q=80&fit=crop", badge:"360° view", skip:true, link:"#" },
-  { id:"dolma", title:"Dolmabahçe Palace", cat:"Palace", price:28, dur:"2h", rating:4.7, img:"https://images.unsplash.com/photo-1570939274717-7eda259b50ed?w=600&q=80&fit=crop", badge:"Crystal stairs", skip:true, link:"#" },
-  { id:"dervish", title:"Whirling Dervish", cat:"Culture", price:22, dur:"1h", rating:4.9, img:"https://images.unsplash.com/photo-1590076084383-7d09ef27e978?w=600&q=80&fit=crop", badge:"Unique", skip:false, link:"#" },
+  { id:"hagia", title:"Hagia Sophia", cat:"Landmark", price:25, dur:"1.5h", rating:4.9, img:"/hagia.jpg", badge:"Most booked", skip:true, link:"https://gyg.me/9TxDoMwH" },
+  { id:"basilica", title:"Basilica Cistern", cat:"Museum", price:20, dur:"1h", rating:4.8, img:"/basilica.jpg", badge:"Fast entry", skip:true, link:"https://gyg.me/HyHBAHab" },
+  { id:"topkapi", title:"Topkapi Palace", cat:"Palace", price:30, dur:"2.5h", rating:4.9, img:"/topkapi.jpg", badge:"High value", skip:true, link:"https://gyg.me/zHWCA6tY" },
+  { id:"cruise", title:"Bosphorus Cruise", cat:"Experience", price:18, dur:"2h", rating:4.7, img:"/cruise.jpg", badge:"Sunset pick", skip:false, link:"https://gyg.me/Ou6l1R0E" },
+  { id:"hammam", title:"Turkish Bath", cat:"Wellness", price:45, dur:"1.5h", rating:4.8, img:"/hammam.jpg", badge:"Authentic", skip:false, link:"https://gyg.me/wdfMolAo" },
+  { id:"galata", title:"Galata Tower", cat:"Viewpoint", price:15, dur:"45min", rating:4.6, img:"/galata.jpg", badge:"360° view", skip:true, link:"https://gyg.me/NCnQgklA" },
+  { id:"dolma", title:"Dolmabahçe Palace", cat:"Palace", price:28, dur:"2h", rating:4.7, img:"/dolma.jpg", badge:"Crystal stairs", skip:true, link:"https://gyg.me/FhcexQTY" },
+  { id:"dervish", title:"Whirling Dervish", cat:"Culture", price:22, dur:"1h", rating:4.9, img:"/dervish.jpg", badge:"Unique", skip:false, link:"https://gyg.me/MZyCEeij" },
+  { id:"islands", title:"Princes' Islands", cat:"Day Trip", price:35, dur:"Full day", rating:4.7, img:"/islands.jpg", badge:"Day trip", skip:false, link:"https://gyg.me/50M4D75g" },
+  { id:"cooking", title:"Turkish Cooking Class", cat:"Experience", price:50, dur:"4h", rating:4.9, img:"/cooking.jpg", badge:"Top rated", skip:false, link:"https://gyg.me/TyiQJFVC" },
+  { id:"foodtour", title:"Istanbul Food Tour", cat:"Experience", price:40, dur:"3.5h", rating:4.8, img:"/foodtour.jpg", badge:"Bestseller", skip:false, link:"https://gyg.me/0KLewel5" },
+  { id:"hoponoff", title:"Hop-on Hop-off Bus", cat:"Transport", price:28, dur:"Full day", rating:4.4, img:"/hoponoff.jpg", badge:"Flexible", skip:false, link:"https://gyg.me/0hgJBsgt" },
+  { id:"nightcruise", title:"Dinner Cruise", cat:"Experience", price:55, dur:"3h", rating:4.6, img:"/nightcruise.jpg", badge:"Romantic", skip:false, link:"https://gyg.me/8f0VjFBO" },
+  { id:"aquarium", title:"Istanbul Aquarium", cat:"Family", price:22, dur:"2h", rating:4.5, img:"/aquarium.jpg", badge:"Family pick", skip:true, link:"https://gyg.me/8drJtohU" },
+  { id:"maiden", title:"Maiden's Tower", cat:"Landmark", price:20, dur:"1.5h", rating:4.7, img:"/maiden.jpg", badge:"Iconic", skip:false, link:"https://gyg.me/3vDd9xwf" },
 ];
 
 const PLAN_DAYS = [
@@ -97,12 +104,16 @@ export default function IstanbulGo() {
   const [planTempo, setPlanTempo] = useState("balanced");
   const [activeDay, setActiveDay] = useState(1);
   const [copied, setCopied] = useState(null);
+  const [bookFilter, setBookFilter] = useState("All");
 
   const toggleFav = id => {const s=new Set(favs);s.has(id)?s.delete(id):s.add(id);setFavs(s)};
   const toggleSel = id => {const s=new Set(planSel);s.has(id)?s.delete(id):s.add(id);setPlanSel(s)};
   const activePlan = PLAN_DAYS.find(d=>d.day===activeDay);
   const doCopy = (text,id) => {navigator.clipboard?.writeText(text).catch(()=>{});setCopied(id);setTimeout(()=>setCopied(null),1500)};
   const goTab = t => {setTab(t);setInfoPage(null);if(t==="plan"&&planStep===0)setPlanStep(0);};
+
+  const cats = ["All",...[...new Set(ATT.map(a=>a.cat))]];
+  const filteredATT = bookFilter==="All"?ATT:ATT.filter(a=>a.cat===bookFilter);
 
   // ═══════════════════════════════════════════
   // ONBOARDING
@@ -179,7 +190,6 @@ export default function IstanbulGo() {
       <div style={{minHeight:"100vh",background:"radial-gradient(circle at top,#eaf2ff 0%,#f5f7fb 35%)",padding:16,fontFamily:fi}}>
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet"/>
         <div style={{maxWidth:440,margin:"0 auto",borderRadius:34,border:"1px solid rgba(255,255,255,0.7)",background:"white",boxShadow:T.sh.hero,overflow:"hidden"}}>
-          {/* Progress */}
           {obStep>0&&<div style={{padding:"16px 24px 0",display:"flex",gap:6}}>
             {[1,2,3].map(s=><div key={s} style={{flex:1,height:3,borderRadius:2,background:s<=obStep?T.primary:T.line}}/>)}
           </div>}
@@ -215,7 +225,6 @@ export default function IstanbulGo() {
               <div style={{width:40,height:40,borderRadius:16,border:"1px solid rgba(255,255,255,0.1)",background:"rgba(255,255,255,0.05)",display:"flex",alignItems:"center",justifyContent:"center"}}><User size={17} color="rgba(255,255,255,0.6)"/></div>
             </div>
           </div>
-          {/* Search */}
           <div style={{marginTop:18,display:"flex",alignItems:"center",gap:10,background:"white",padding:"12px 16px",borderRadius:16}}>
             <Search size={17} color={T.inkMute}/>
             <input placeholder="Find tickets, routes, eSIM, tips..." style={{flex:1,border:"none",outline:"none",background:"transparent",fontSize:14,color:T.ink,fontFamily:fi}}/>
@@ -228,7 +237,6 @@ export default function IstanbulGo() {
 
           {/* ─── HOME ─── */}
           {tab==="home"&&!infoPage&&(<>
-            {/* ── YOUR PLAN IS READY (only after onboarding) ── */}
             {planStep===4&&(
               <div onClick={()=>goTab("plan")} style={{
                 overflow:"hidden",borderRadius:24,marginBottom:24,cursor:"pointer",position:"relative",
@@ -276,7 +284,7 @@ export default function IstanbulGo() {
               <p style={{marginTop:8,fontSize:13,lineHeight:1.6,color:"rgba(255,255,255,0.65)",maxWidth:280}}>Bundle attractions, skip lines, audio guides, and transport in one flow.</p>
               <div style={{display:"flex",alignItems:"flex-end",justifyContent:"space-between",marginTop:20}}>
                 <div><div style={{fontSize:12,color:"rgba(255,255,255,0.45)"}}>From</div><div style={{fontSize:30,fontWeight:800}}>€65</div></div>
-                <a href="#" target="_blank" rel="noopener noreferrer" style={{background:"white",padding:"12px 16px",borderRadius:16,fontSize:13,fontWeight:700,color:T.ink,textDecoration:"none",display:"flex",alignItems:"center",gap:6}}>Compare <ExternalLink size={13}/></a>
+                <a href="https://istanbulwelcomecard.com" target="_blank" rel="noopener noreferrer" style={{background:"white",padding:"12px 16px",borderRadius:16,fontSize:13,fontWeight:700,color:T.ink,textDecoration:"none",display:"flex",alignItems:"center",gap:6}}>Compare <ExternalLink size={13}/></a>
               </div>
             </div>
 
@@ -284,10 +292,10 @@ export default function IstanbulGo() {
             <div style={{marginBottom:28}}>
               <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-end",marginBottom:16}}>
                 <div><Lbl>Popular now</Lbl><div style={{fontSize:22,fontWeight:800,letterSpacing:"-0.03em",fontFamily:fd}}>Top Tickets</div></div>
-                <span onClick={()=>goTab("book")} style={{fontSize:12,fontWeight:600,color:T.primary,cursor:"pointer"}}>See all</span>
+                <span onClick={()=>goTab("book")} style={{fontSize:12,fontWeight:600,color:T.primary,cursor:"pointer"}}>See all →</span>
               </div>
               <div style={{display:"flex",gap:12,overflowX:"auto",paddingBottom:8,marginRight:-20}}>
-                {ATT.slice(0,4).map(a=>(
+                {ATT.slice(0,5).map(a=>(
                   <div key={a.id} style={{minWidth:228,overflow:"hidden",borderRadius:24,border:`1px solid ${T.line}`,background:"white",flexShrink:0}}>
                     <div style={{position:"relative",height:148,overflow:"hidden"}}>
                       <img src={a.img} alt={a.title} style={{width:"100%",height:"100%",objectFit:"cover"}}/>
@@ -305,6 +313,41 @@ export default function IstanbulGo() {
                       <div style={{display:"flex",justifyContent:"space-between",fontSize:12,color:T.inkMute,marginBottom:12}}>
                         <span style={{display:"flex",alignItems:"center",gap:4}}><Clk size={13}/> {a.dur}</span>
                         {a.skip&&<span style={{color:T.ok,fontWeight:500}}>Skip line</span>}
+                      </div>
+                      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                        <div><div style={{fontSize:12,color:T.inkMute}}>From</div><div style={{fontSize:22,fontWeight:800,letterSpacing:"-0.03em"}}>€{a.price}</div></div>
+                        <a href={a.link} target="_blank" rel="noopener noreferrer" style={{display:"flex",alignItems:"center",gap:6,height:44,padding:"0 16px",borderRadius:16,background:T.primary,color:"white",fontSize:13,fontWeight:700,textDecoration:"none"}}>Book <ExternalLink size={13}/></a>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Experiences Row */}
+            <div style={{marginBottom:28}}>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-end",marginBottom:16}}>
+                <div><Lbl>Don't miss</Lbl><div style={{fontSize:22,fontWeight:800,letterSpacing:"-0.03em",fontFamily:fd}}>Experiences</div></div>
+                <span onClick={()=>goTab("book")} style={{fontSize:12,fontWeight:600,color:T.primary,cursor:"pointer"}}>See all →</span>
+              </div>
+              <div style={{display:"flex",gap:12,overflowX:"auto",paddingBottom:8,marginRight:-20}}>
+                {ATT.filter(a=>["Experience","Day Trip","Culture"].includes(a.cat)).map(a=>(
+                  <div key={a.id} style={{minWidth:228,overflow:"hidden",borderRadius:24,border:`1px solid ${T.line}`,background:"white",flexShrink:0}}>
+                    <div style={{position:"relative",height:148,overflow:"hidden"}}>
+                      <img src={a.img} alt={a.title} style={{width:"100%",height:"100%",objectFit:"cover"}}/>
+                      <div style={{position:"absolute",inset:0,background:"linear-gradient(to top,rgba(15,23,42,0.6),transparent 60%)"}}/>
+                      <div style={{position:"absolute",left:12,top:12}}><Pill tone="rgba(255,255,255,0.92)" color={T.dark}>{a.badge}</Pill></div>
+                      <div style={{position:"absolute",bottom:12,left:12,right:12,display:"flex",justifyContent:"space-between",alignItems:"flex-end"}}>
+                        <div><div style={{fontSize:15,fontWeight:700,color:"white"}}>{a.title}</div><div style={{fontSize:12,color:"rgba(255,255,255,0.7)",marginTop:2}}>{a.cat}</div></div>
+                        <div style={{background:"rgba(255,255,255,0.9)",padding:"4px 10px",borderRadius:99,fontSize:11,fontWeight:600}}>{a.rating} ★</div>
+                      </div>
+                      <div onClick={()=>toggleFav(a.id)} style={{position:"absolute",top:12,right:12,width:32,height:32,borderRadius:12,background:favs.has(a.id)?"rgba(225,29,72,0.9)":"rgba(255,255,255,0.15)",backdropFilter:"blur(8px)",display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer"}}>
+                        <Heart size={16} color="white" fill={favs.has(a.id)?"white":"none"}/>
+                      </div>
+                    </div>
+                    <div style={{padding:16}}>
+                      <div style={{display:"flex",justifyContent:"space-between",fontSize:12,color:T.inkMute,marginBottom:12}}>
+                        <span style={{display:"flex",alignItems:"center",gap:4}}><Clk size={13}/> {a.dur}</span>
                       </div>
                       <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
                         <div><div style={{fontSize:12,color:T.inkMute}}>From</div><div style={{fontSize:22,fontWeight:800,letterSpacing:"-0.03em"}}>€{a.price}</div></div>
@@ -459,10 +502,8 @@ export default function IstanbulGo() {
 
           {/* ─── PLAN ─── */}
           {tab==="plan"&&(<div>
-            {/* Progress bar - only during steps 1-3 */}
             {planStep>=1&&planStep<=3&&<div style={{display:"flex",gap:6,marginBottom:24}}>{[1,2,3].map(s=><div key={s} style={{flex:1,height:3,borderRadius:2,background:s<=planStep?T.primary:T.line}}/>)}</div>}
 
-            {/* ── INTRO (Step 0) ── */}
             {planStep===0&&(<div>
               <div style={{overflow:"hidden",borderRadius:28,background:`linear-gradient(135deg,${T.dark} 0%,#16233B 100%)`,padding:"40px 24px",color:"white",textAlign:"center",marginBottom:20,position:"relative"}}>
                 <div style={{position:"absolute",inset:0,opacity:0.06,backgroundImage:"radial-gradient(circle at 1px 1px,white 0.5px,transparent 0)",backgroundSize:"18px 18px"}}/>
@@ -486,7 +527,6 @@ export default function IstanbulGo() {
               <div style={{textAlign:"center",marginTop:12,fontSize:12,color:T.inkMute}}>Takes about 30 seconds</div>
             </div>)}
 
-            {/* ── STEP 1: Days ── */}
             {planStep===1&&(<div>
               <div onClick={()=>setPlanStep(0)} style={{display:"flex",alignItems:"center",gap:6,fontSize:13,color:T.inkMute,cursor:"pointer",marginBottom:16}}><ArrowLeft size={14}/> Back</div>
               <div style={{textAlign:"center",marginBottom:8}}><div style={{fontSize:48,marginBottom:4}}>📅</div></div>
@@ -506,7 +546,6 @@ export default function IstanbulGo() {
               <div onClick={()=>setPlanStep(2)} style={{background:T.primary,color:"white",padding:"14px 0",borderRadius:16,fontWeight:700,fontSize:15,cursor:"pointer",textAlign:"center"}}>Continue</div>
             </div>)}
 
-            {/* ── STEP 2: Interests ── */}
             {planStep===2&&(<div>
               <div onClick={()=>setPlanStep(1)} style={{display:"flex",alignItems:"center",gap:6,fontSize:13,color:T.inkMute,cursor:"pointer",marginBottom:16}}><ArrowLeft size={14}/> Back</div>
               <Lbl>Step 2 of 3</Lbl>
@@ -526,7 +565,6 @@ export default function IstanbulGo() {
               <div onClick={()=>planSel.size>0&&setPlanStep(3)} style={{background:planSel.size>0?T.primary:T.line,color:planSel.size>0?"white":T.inkMute,padding:"14px 0",borderRadius:16,fontWeight:700,fontSize:15,cursor:planSel.size>0?"pointer":"default",textAlign:"center"}}>Continue</div>
             </div>)}
 
-            {/* ── STEP 3: Pace ── */}
             {planStep===3&&(<div>
               <div onClick={()=>setPlanStep(2)} style={{display:"flex",alignItems:"center",gap:6,fontSize:13,color:T.inkMute,cursor:"pointer",marginBottom:16}}><ArrowLeft size={14}/> Back</div>
               <Lbl>Step 3 of 3</Lbl>
@@ -550,7 +588,6 @@ export default function IstanbulGo() {
               </div>
             </div>)}
 
-            {/* ── RESULTS (Step 4) ── */}
             {planStep===4&&(<>
               <div onClick={()=>setPlanStep(0)} style={{display:"flex",alignItems:"center",gap:6,fontSize:13,color:T.inkMute,cursor:"pointer",marginBottom:16}}><ArrowLeft size={14}/> Start over</div>
               <div style={{borderRadius:16,background:T.primarySoft,padding:"10px 14px",marginBottom:20,display:"flex",alignItems:"center",gap:10}}><Sparkles size={16} color={T.primary}/><span style={{fontSize:13,color:T.inkSoft}}>Optimized for {planTempo} pace · {planDays} days</span></div>
@@ -562,14 +599,14 @@ export default function IstanbulGo() {
                   <div style={{display:"flex",flexDirection:"column",alignItems:"center",width:16}}><div style={{width:12,height:12,borderRadius:6,marginTop:16,background:dotC[s.tp]||T.inkMute}}/>{i<activePlan.items.length-1&&<div style={{width:1,flex:1,background:T.line,marginTop:8}}/>}</div>
                   <div style={{flex:1,marginBottom:12,borderRadius:20,border:`1px solid ${T.line}`,background:"#F8FAFC",padding:16}}>
                     <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}><div style={{fontSize:14,fontWeight:700}}>{s.n}</div>
-                      {s.id&&<a href="#" target="_blank" rel="noopener noreferrer" style={{fontSize:11,fontWeight:600,color:T.primary,display:"flex",alignItems:"center",gap:3,textDecoration:"none"}}>Book<ExternalLink size={10}/></a>}
+                      {s.id&&ATT.find(a=>a.id===s.id)&&<a href={ATT.find(a=>a.id===s.id).link} target="_blank" rel="noopener noreferrer" style={{fontSize:11,fontWeight:600,color:T.primary,display:"flex",alignItems:"center",gap:3,textDecoration:"none"}}>Book<ExternalLink size={10}/></a>}
                     </div>
                     <div style={{fontSize:12,color:T.inkMute,marginTop:4}}>{s.m}</div>
                   </div>
                 </div>)}
                 <div style={{borderRadius:16,background:T.goldSoft,padding:14,marginTop:8,display:"flex",alignItems:"center",gap:12}}>
                   <Zap size={18} color={T.gold}/><div style={{flex:1}}><div style={{fontSize:13,fontWeight:700}}>Save with Welcome Card</div><div style={{fontSize:11,color:T.inkMute,marginTop:2}}>This day includes 3 paid sites — card saves ~40%</div></div>
-                  <a href="#" style={{fontSize:12,fontWeight:700,color:T.primary,textDecoration:"none"}}>Compare</a>
+                  <a href="https://istanbulwelcomecard.com" target="_blank" rel="noopener noreferrer" style={{fontSize:12,fontWeight:700,color:T.primary,textDecoration:"none"}}>Compare</a>
                 </div>
                 <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginTop:16}}>
                   <div onClick={()=>setPlanStep(0)} style={{display:"flex",alignItems:"center",justifyContent:"center",gap:6,borderRadius:18,border:`1px solid ${T.line}`,padding:"12px 16px",fontSize:13,fontWeight:700,color:T.inkSoft,cursor:"pointer"}}><RotateCcw size={14}/> Rebuild</div>
@@ -587,10 +624,16 @@ export default function IstanbulGo() {
               <Pill tone="rgba(255,255,255,0.14)" color="#DBEAFE">Best value</Pill>
               <div style={{fontSize:18,fontWeight:800,fontFamily:fd,marginTop:8}}>Istanbul Welcome Card</div>
               <div style={{fontSize:12,color:"rgba(255,255,255,0.5)",marginTop:4,marginBottom:12}}>10+ sites · Skip lines · Audio · Transport</div>
-              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}><span style={{fontSize:22,fontWeight:800}}>€65</span><a href="#" target="_blank" rel="noopener noreferrer" style={{background:"white",padding:"9px 18px",borderRadius:12,fontSize:13,fontWeight:700,color:T.ink,textDecoration:"none"}}>Get card</a></div>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}><span style={{fontSize:22,fontWeight:800}}>€65</span><a href="https://istanbulwelcomecard.com" target="_blank" rel="noopener noreferrer" style={{background:"white",padding:"9px 18px",borderRadius:12,fontSize:13,fontWeight:700,color:T.ink,textDecoration:"none"}}>Get card</a></div>
             </div>
-            <Lbl>All tickets</Lbl>
-            {ATT.map(a=>(
+            {/* Filter */}
+            <div style={{display:"flex",gap:6,overflowX:"auto",marginBottom:16,paddingBottom:4}}>
+              {cats.map(c=>(
+                <div key={c} onClick={()=>setBookFilter(c)} style={{padding:"7px 14px",borderRadius:99,fontSize:12,fontWeight:600,cursor:"pointer",whiteSpace:"nowrap",background:bookFilter===c?T.dark:"white",color:bookFilter===c?"white":T.inkSoft,border:bookFilter===c?"none":`1px solid ${T.line}`}}>{c}</div>
+              ))}
+            </div>
+            <Lbl>{bookFilter==="All"?"All tickets":"Filtered"} · {filteredATT.length} results</Lbl>
+            {filteredATT.map(a=>(
               <div key={a.id} style={{display:"flex",alignItems:"center",gap:12,borderRadius:22,background:"white",border:`1px solid ${T.line}`,padding:12,marginBottom:12}}>
                 <img src={a.img} alt={a.title} style={{width:64,height:64,borderRadius:16,objectFit:"cover"}}/>
                 <div style={{flex:1,minWidth:0}}>
@@ -633,7 +676,6 @@ export default function IstanbulGo() {
           {/* ─── TRIP WALLET ─── */}
           {tab==="trip"&&(<div>
             <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:20}}><Back onClick={()=>goTab("home")}/><div><Lbl>Your trip</Lbl><div style={{fontSize:24,fontWeight:800,fontFamily:fd}}>Trip Wallet</div></div></div>
-            {/* Saved */}
             <Lbl>Saved places</Lbl>
             {favs.size===0?<div style={{textAlign:"center",padding:"40px 20px",background:"white",borderRadius:22,border:`1px solid ${T.line}`}}><Heart size={32} color={T.line}/><div style={{fontSize:14,fontWeight:600,marginTop:12}}>No saved places yet</div><div style={{fontSize:12,color:T.inkMute,marginTop:4}}>Tap ♥ on any attraction to save it here</div></div>
             :<div style={{marginBottom:20}}>{ATT.filter(a=>favs.has(a.id)).map(a=>(
@@ -646,7 +688,6 @@ export default function IstanbulGo() {
                 </div>
               </div>
             ))}</div>}
-            {/* Quick access */}
             <Lbl>Quick access</Lbl>
             <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
               {[{Icon:QrCode,t:"My Tickets",d:"QR codes & passes"},{Icon:Route,t:"Today's Route",d:"Navigate your plan"},{Icon:Plane,t:"Airport Transfer",d:"Book or check status"},{Icon:MessageCircle,t:"Need Help?",d:"24/7 support"}].map(c=>(
