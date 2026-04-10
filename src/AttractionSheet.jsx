@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { ArrowLeft, Heart, Ticket, Star, Info, ChevronRight, Landmark, TramFront, Shirt, ExternalLink, Waves, Music, Eye, Moon, Ship, Sun, Bus, MapPin, UtensilsCrossed, ChefHat, Fish, Clock, Camera, Zap, AlertTriangle, Check, Sparkles, Navigation } from "lucide-react";
 
 const C = { ink:"#0F172A", inkSoft:"#475569", inkMute:"#94A3B8", line:"#E2E8F0", soft:"#F8FAFC", blue:"#1D4ED8", blueSoft:"#DBEAFE", ok:"#059669", okSoft:"#D1FAE5", warn:"#D97706", warnSoft:"#FEF3C7", gold:"#C59D5F", goldSoft:"#FBF5EB", dark:"#0B1220", danger:"#E11D48" };
@@ -26,7 +26,8 @@ const D = {
 export default function AttractionSheet({ attraction, allAttractions, onClose, onFav, isFav, onOpenOther, isPremium, onUpgrade, onBook }) {
   const [gi, setGi] = useState(0);
   const [vis, setVis] = useState(false);
-  useEffect(() => { if (attraction) setTimeout(() => setVis(true), 10); return () => setVis(false); }, [attraction?.id]);
+  const scrollRef = useRef(null);
+  useEffect(() => { if (attraction) { setTimeout(() => setVis(true), 10); if (scrollRef.current) scrollRef.current.scrollTop = 0; } return () => setVis(false); }, [attraction?.id]);
   if (!attraction) return null;
   const d = D[attraction.id] || {};
   const gallery = d.gallery || [attraction.img];
@@ -62,7 +63,7 @@ export default function AttractionSheet({ attraction, allAttractions, onClose, o
           </div>
         </div>
         {/* SCROLLABLE */}
-        <div style={{ flex: 1, overflowY: "auto", padding: "14px 16px 20px", background: "linear-gradient(180deg,#F8FBFF 0%,#F5F7FB 30%)" }}>
+        <div ref={scrollRef} style={{ flex: 1, overflowY: "auto", padding: "14px 16px 20px", background: "linear-gradient(180deg,#F8FBFF 0%,#F5F7FB 30%)" }}>
           {gallery.length > 1 && <div style={{ display: "flex", gap: 6, overflowX: "auto", paddingBottom: 6, marginBottom: 10 }}>{gallery.map((im, i) => <button key={i} onClick={() => setGi(i)} style={{ width: 52, height: 52, borderRadius: 12, overflow: "hidden", flexShrink: 0, padding: 0, cursor: "pointer", border: gi === i ? `2px solid ${C.blue}` : `1px solid ${C.line}`, background: "white" }}><img src={im} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /></button>)}</div>}
           {/* 2. WHY */}
           {d.whyGo && <Sec><ST icon={Landmark}>Why this place</ST><div style={{ fontSize: 13, lineHeight: 1.7, color: C.inkSoft }}>{d.whyGo}</div></Sec>}
@@ -93,12 +94,12 @@ export default function AttractionSheet({ attraction, allAttractions, onClose, o
             <span style={{ fontSize: 10, color: C.warn, fontWeight: 600 }}>⏳ Sells out in peak season</span>
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <div style={{ flex: "0 0 auto" }}>
+            <div style={{ flex: 1 }}>
               <div style={{ fontSize: 10, color: C.inkMute }}>From</div>
-              <div style={{ fontSize: 22, fontWeight: 800, letterSpacing: "-0.03em" }}>€{attraction.price}</div>
+              <div style={{ fontSize: 26, fontWeight: 800, letterSpacing: "-0.03em" }}>€{attraction.price}</div>
             </div>
             <div onClick={() => { if (onFav) onFav(attraction.id); }} style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 4, padding: "12px 14px", borderRadius: 14, border: `1.5px solid ${C.line}`, fontSize: 12, fontWeight: 600, color: C.ink, cursor: "pointer", background: "white" }}>+ My Day</div>
-            <div onClick={() => onBook && onBook(attraction)} style={{ flex: 1, border: "none", background: "linear-gradient(135deg,#1D4ED8,#1E40AF)", color: "white", borderRadius: 14, padding: "12px 0", fontSize: 13, fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 6, boxShadow: "0 4px 14px rgba(29,78,216,0.3)", textAlign: "center" }}>{attraction.skip ? "Skip the Line →" : "Reserve Your Spot →"}</div>
+            <div onClick={() => onBook && onBook(attraction)} style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 6, padding: "12px 18px", borderRadius: 14, background: "linear-gradient(135deg,#1D4ED8,#1E40AF)", color: "white", fontSize: 13, fontWeight: 700, cursor: "pointer", boxShadow: "0 4px 14px rgba(29,78,216,0.3)" }}>{attraction.skip ? "Skip the Line →" : "Reserve Your Spot →"}</div>
           </div>
         </div>
       </div>
