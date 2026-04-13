@@ -40,6 +40,7 @@ function walkingTime(km) {
 export default function ItineraryMap({
   planResult, allAttractions, activeDay, setActiveDay,
   onOpenAttraction, onPreview, onBook, onRebuild, onBack,
+  myTickets = [], onToggleTicket, onShare,
 }) {
   const [navOpen, setNavOpen] = useState(null);
   const mapContainerRef = useRef(null);
@@ -244,17 +245,47 @@ export default function ItineraryMap({
 
                   <div style={{ display: "flex", gap: 6, marginTop: 8 }}>
                     {spot.price > 0 && spot.link ? (
-                      <div
-                        onClick={() => onBook && onBook(spot)}
-                        style={{
-                          flex: 1, display: "flex", alignItems: "center", justifyContent: "center",
-                          gap: 4, padding: "7px 0", borderRadius: 10,
-                          background: `linear-gradient(135deg, ${C.blue}, #1E40AF)`,
-                          color: "white", fontSize: 11, fontWeight: 700, cursor: "pointer",
-                        }}
-                      >
-                        <Ticket size={11} />Book · €{spot.price}
-                      </div>
+                      myTickets.includes(spot.id) ? (
+                        <div
+                          onClick={() => onToggleTicket && onToggleTicket(spot.id)}
+                          style={{
+                            flex: 1, display: "flex", alignItems: "center", justifyContent: "center",
+                            gap: 4, padding: "7px 0", borderRadius: 10,
+                            background: "#D1FAE5", color: C.ok,
+                            fontSize: 11, fontWeight: 700, cursor: "pointer",
+                            border: `1px solid ${C.ok}`,
+                          }}
+                        >
+                          ✓ Got ticket
+                        </div>
+                      ) : (
+                        <>
+                          <div
+                            onClick={() => onBook && onBook(spot)}
+                            style={{
+                              flex: 1, display: "flex", alignItems: "center", justifyContent: "center",
+                              gap: 4, padding: "7px 0", borderRadius: 10,
+                              background: `linear-gradient(135deg, ${C.blue}, #1E40AF)`,
+                              color: "white", fontSize: 11, fontWeight: 700, cursor: "pointer",
+                            }}
+                          >
+                            <Ticket size={11} />Book · €{spot.price}
+                          </div>
+                          <div
+                            onClick={() => onToggleTicket && onToggleTicket(spot.id)}
+                            style={{
+                              display: "flex", alignItems: "center", justifyContent: "center",
+                              padding: "7px 10px", borderRadius: 10,
+                              background: "white", color: C.inkSoft,
+                              fontSize: 10, fontWeight: 700, cursor: "pointer",
+                              border: `1px dashed ${C.line}`,
+                            }}
+                            title="I already have this ticket"
+                          >
+                            Got it
+                          </div>
+                        </>
+                      )
                     ) : (
                       <div style={{
                         flex: 1, display: "flex", alignItems: "center", justifyContent: "center",
@@ -294,22 +325,57 @@ export default function ItineraryMap({
         })}
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-        <div onClick={onRebuild} style={{
-          display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
-          borderRadius: 14, border: `1px solid ${C.line}`, background: "white",
-          padding: "12px", fontSize: 12, fontWeight: 700, color: C.inkSoft, cursor: "pointer",
-        }}>
-          <RotateCcw size={13} />Rebuild plan
-        </div>
-        <div style={{
-          display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
-          borderRadius: 14, background: C.dark,
-          padding: "12px", fontSize: 12, fontWeight: 700, color: "white", cursor: "pointer",
-        }}>
-          <Ticket size={13} />Book all tickets
-        </div>
-      </div>
+      {/* BOTTOM ACTIONS */}
+      {(() => {
+        const ticketCount = daySpots.filter(s => s.price > 0 && s.link && myTickets.includes(s.id)).length;
+        const totalTickets = daySpots.filter(s => s.price > 0 && s.link).length;
+        return (
+          <>
+            {/* Ticket progress summary */}
+            {totalTickets > 0 && (
+              <div style={{
+                background: "#F8FAFC", border: `1px solid ${C.line}`,
+                borderRadius: 14, padding: "10px 14px", marginBottom: 10,
+                display: "flex", alignItems: "center", gap: 10,
+              }}>
+                <div style={{
+                  width: 28, height: 28, borderRadius: 14,
+                  background: ticketCount === totalTickets ? "#D1FAE5" : "#F1F5F9",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  flexShrink: 0,
+                }}>
+                  <Ticket size={14} color={ticketCount === totalTickets ? C.ok : C.inkMute} />
+                </div>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: 12, fontWeight: 700 }}>
+                    {ticketCount} of {totalTickets} tickets marked
+                  </div>
+                  <div style={{ fontSize: 10, color: C.inkMute, marginTop: 1 }}>
+                    Tap "Got it" on cards you already have
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+              <div onClick={onRebuild} style={{
+                display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
+                borderRadius: 14, border: `1px solid ${C.line}`, background: "white",
+                padding: "12px", fontSize: 12, fontWeight: 700, color: C.inkSoft, cursor: "pointer",
+              }}>
+                <RotateCcw size={13} />Rebuild
+              </div>
+              <div onClick={() => onShare && onShare()} style={{
+                display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
+                borderRadius: 14, background: C.dark,
+                padding: "12px", fontSize: 12, fontWeight: 700, color: "white", cursor: "pointer",
+              }}>
+                <ExternalLink size={13} />Share plan
+              </div>
+            </div>
+          </>
+        );
+      })()}
 
       {navOpen && (
         <div style={{

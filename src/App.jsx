@@ -161,6 +161,9 @@ export default function IstanbulGo(){
   const[esimOpen,setEsimOpen]=useState(false);
   const[searchQuery,setSearchQuery]=useState("");
   const[searchFocused,setSearchFocused]=useState(false);
+  const[myTickets,setMyTickets]=useState([]);
+  const[tripTab,setTripTab]=useState("favorites");
+  const[ticketSearch,setTicketSearch]=useState("");
   const[planDays,setPlanDays]=useState(null);
   const[planPace,setPlanPace]=useState(null);
   const[planInterests,setPlanInterests]=useState([]);
@@ -175,10 +178,32 @@ export default function IstanbulGo(){
     const savedUser=localStorage.getItem("user");
     const savedPremium=localStorage.getItem("premium");
     const savedFavs=localStorage.getItem("favs");
+    const savedTickets=localStorage.getItem("myTickets");
     if(savedUser) setUser(JSON.parse(savedUser));
     if(savedPremium) setIsPremium(true);
     if(savedFavs) setFavs(new Set(JSON.parse(savedFavs)));
+    if(savedTickets) setMyTickets(JSON.parse(savedTickets));
   },[]);
+
+  const toggleTicket=(id)=>{
+    const updated=myTickets.includes(id)?myTickets.filter(t=>t!==id):[...myTickets,id];
+    setMyTickets(updated);
+    localStorage.setItem("myTickets",JSON.stringify(updated));
+  };
+
+  const sharePlan=()=>{
+    if(!planResult) return;
+    const text=`My Istanbul plan (${planDays} days):\n\n`+planResult.days.map(d=>{
+      const items=d.items.filter(i=>i.id).map(i=>{const a=ATT.find(a=>a.id===i.id);return `${i.t} ${a?.title||i.n}`}).join("\n");
+      return `Day ${d.day} · ${d.title}\n${items}`;
+    }).join("\n\n")+"\n\nMade with IstanbulGo · istanbulgo.vercel.app";
+    if(navigator.share){
+      navigator.share({title:"My Istanbul Plan",text}).catch(()=>{});
+    }else{
+      navigator.clipboard?.writeText(text);
+      alert("Plan copied to clipboard!");
+    }
+  };
 
   const toggleFav=id=>{
     const s=new Set(favs);
@@ -622,6 +647,9 @@ export default function IstanbulGo(){
                 onBook={handleBook}
                 onRebuild={()=>setPlanStep(0)}
                 onBack={()=>setPlanStep(0)}
+                myTickets={myTickets}
+                onToggleTicket={toggleTicket}
+                onShare={sharePlan}
               />
               {/* Premium upsell */}
               {!isPremium&&<div onClick={()=>setPremiumOpen(true)} style={{borderRadius:22,background:"linear-gradient(135deg,#0B1220,#1D4ED8)",padding:18,marginTop:16,cursor:"pointer",color:"white",position:"relative",overflow:"hidden"}}>
@@ -654,7 +682,133 @@ export default function IstanbulGo(){
           {tab==="explore"&&guideId==="neighborhoods"&&<div><div style={{display:"flex",alignItems:"center",gap:12,marginBottom:20}}><Bk onClick={()=>setGuideId(null)}/><div><Lbl>Guide</Lbl><div style={{fontSize:24,fontWeight:800,fontFamily:fd}}>Neighborhoods</div></div></div><div style={{fontSize:13,color:T.inkSoft,lineHeight:1.6,marginBottom:20}}>Explore Istanbul district by district.</div>{NEIGHBORHOODS.map(nb=><div key={nb.n} style={{borderRadius:22,background:"white",border:`1px solid ${T.line}`,overflow:"hidden",marginBottom:12}}><div style={{position:"relative",height:100}}><img src={nb.img} alt={nb.n} style={{width:"100%",height:"100%",objectFit:"cover"}}/><div style={{position:"absolute",inset:0,background:"linear-gradient(to top,rgba(15,23,42,0.5),transparent 50%)"}}/><div style={{position:"absolute",bottom:10,left:14,fontSize:16,fontWeight:800,color:"white"}}>{nb.n}</div></div><div style={{padding:"12px 14px",fontSize:12,color:T.inkSoft}}>{nb.d}</div></div>)}</div>}
 
           {/* ── TRIP ── */}
-          {tab==="trip"&&<div><div style={{display:"flex",alignItems:"center",gap:12,marginBottom:20}}><Bk onClick={()=>goTab("home")}/><div><Lbl>Your trip</Lbl><div style={{fontSize:24,fontWeight:800,fontFamily:fd}}>Trip Wallet</div></div></div><Lbl>Saved places</Lbl>{favs.size===0?<div style={{textAlign:"center",padding:"40px 20px",background:"white",borderRadius:22,border:`1px solid ${T.line}`}}><Heart size={32} color={T.line}/><div style={{fontSize:14,fontWeight:600,marginTop:12}}>No saved places yet</div></div>:<div style={{marginBottom:20}}>{ATT.filter(a=>favs.has(a.id)).map(a=><div key={a.id} onClick={()=>setPreviewAtt(a)} style={{display:"flex",alignItems:"center",gap:12,borderRadius:20,background:"white",border:`1px solid ${T.line}`,padding:12,marginBottom:10,cursor:"pointer",position:"relative"}}><div onClick={(e)=>{e.stopPropagation();toggleFav(a.id)}} style={{position:"absolute",top:-6,right:-6,width:20,height:20,borderRadius:10,background:T.ink,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",boxShadow:"0 2px 6px rgba(0,0,0,0.15)"}}><X size={10} color="white"/></div><img src={a.img} alt={a.title} style={{width:52,height:52,borderRadius:14,objectFit:"cover"}}/><div style={{flex:1}}><div style={{fontSize:14,fontWeight:700}}>{a.title}</div><div style={{fontSize:12,color:T.inkMute,marginTop:2}}>€{a.price}</div></div><div onClick={(e)=>{e.stopPropagation();handleBook(a)}} style={{padding:"8px 14px",borderRadius:12,background:"linear-gradient(135deg,#1D4ED8,#1E40AF)",color:"white",fontSize:12,fontWeight:700,cursor:"pointer"}}>Book</div></div>)}</div>}</div>}
+          {tab==="trip"&&<div>
+            <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:20}}>
+              <Bk onClick={()=>goTab("home")}/>
+              <div><Lbl>Your trip</Lbl><div style={{fontSize:24,fontWeight:800,fontFamily:fd}}>Trip Wallet</div></div>
+            </div>
+
+            {/* Tab switcher */}
+            <div style={{display:"flex",gap:6,background:"#F1F5F9",padding:4,borderRadius:14,marginBottom:20}}>
+              <div onClick={()=>setTripTab("favorites")} style={{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:6,padding:"10px 0",borderRadius:10,fontSize:13,fontWeight:700,cursor:"pointer",background:tripTab==="favorites"?"white":"transparent",color:tripTab==="favorites"?T.ink:T.inkMute,boxShadow:tripTab==="favorites"?"0 2px 6px rgba(0,0,0,0.06)":"none"}}>
+                <Heart size={14} color={tripTab==="favorites"?T.danger:T.inkMute} fill={tripTab==="favorites"?T.danger:"none"}/>
+                Favorites <span style={{fontSize:11,fontWeight:600,opacity:0.7}}>({favs.size})</span>
+              </div>
+              <div onClick={()=>setTripTab("tickets")} style={{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:6,padding:"10px 0",borderRadius:10,fontSize:13,fontWeight:700,cursor:"pointer",background:tripTab==="tickets"?"white":"transparent",color:tripTab==="tickets"?T.ink:T.inkMute,boxShadow:tripTab==="tickets"?"0 2px 6px rgba(0,0,0,0.06)":"none"}}>
+                <Ticket size={14} color={tripTab==="tickets"?T.ok:T.inkMute}/>
+                My Tickets <span style={{fontSize:11,fontWeight:600,opacity:0.7}}>({myTickets.length})</span>
+              </div>
+            </div>
+
+            {/* ── FAVORITES TAB ── */}
+            {tripTab==="favorites"&&<>
+              {favs.size===0?
+                <div style={{textAlign:"center",padding:"40px 20px",background:"white",borderRadius:22,border:`1px solid ${T.line}`}}>
+                  <Heart size={32} color={T.line}/>
+                  <div style={{fontSize:14,fontWeight:600,marginTop:12}}>No saved places yet</div>
+                  <div style={{fontSize:12,color:T.inkMute,marginTop:4}}>Tap ♥ on any place to save it here</div>
+                </div>
+                :
+                <div style={{marginBottom:20}}>
+                  {ATT.filter(a=>favs.has(a.id)).map(a=>
+                    <div key={a.id} onClick={()=>setPreviewAtt(a)} style={{display:"flex",alignItems:"center",gap:12,borderRadius:20,background:"white",border:`1px solid ${T.line}`,padding:12,marginBottom:10,cursor:"pointer",position:"relative"}}>
+                      <div onClick={(e)=>{e.stopPropagation();toggleFav(a.id)}} style={{position:"absolute",top:-6,right:-6,width:20,height:20,borderRadius:10,background:T.ink,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",boxShadow:"0 2px 6px rgba(0,0,0,0.15)"}}><X size={10} color="white"/></div>
+                      <img src={a.img} alt={a.title} style={{width:52,height:52,borderRadius:14,objectFit:"cover"}}/>
+                      <div style={{flex:1}}>
+                        <div style={{fontSize:14,fontWeight:700}}>{a.title}</div>
+                        <div style={{fontSize:12,color:T.inkMute,marginTop:2}}>{a.price>0?`€${a.price}`:"Free"}</div>
+                      </div>
+                      {myTickets.includes(a.id)&&<div style={{padding:"4px 8px",borderRadius:8,background:"#D1FAE5",color:T.ok,fontSize:10,fontWeight:700,display:"flex",alignItems:"center",gap:3}}><Ticket size={9}/>Got it</div>}
+                      {!myTickets.includes(a.id)&&a.price>0&&a.link&&<div onClick={(e)=>{e.stopPropagation();handleBook(a)}} style={{padding:"8px 14px",borderRadius:12,background:"linear-gradient(135deg,#1D4ED8,#1E40AF)",color:"white",fontSize:12,fontWeight:700,cursor:"pointer"}}>Book</div>}
+                    </div>
+                  )}
+                </div>
+              }
+            </>}
+
+            {/* ── MY TICKETS TAB ── */}
+            {tripTab==="tickets"&&<>
+              {/* Search to add tickets */}
+              <div style={{marginBottom:14}}>
+                <div style={{fontSize:10,fontWeight:700,color:T.inkMute,textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:8}}>Add a ticket you already have</div>
+                <div style={{display:"flex",alignItems:"center",gap:10,background:"white",border:`1px solid ${T.line}`,padding:"12px 14px",borderRadius:14}}>
+                  <Search size={16} color={T.inkMute}/>
+                  <input
+                    value={ticketSearch}
+                    onChange={(e)=>setTicketSearch(e.target.value)}
+                    placeholder="Search Hagia Sophia, Topkapi..."
+                    style={{flex:1,border:"none",outline:"none",background:"transparent",fontSize:14,color:T.ink,fontFamily:fi}}
+                  />
+                  {ticketSearch&&<div onClick={()=>setTicketSearch("")} style={{width:20,height:20,borderRadius:10,background:"#F1F5F9",display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer"}}><X size={11} color={T.inkSoft}/></div>}
+                </div>
+
+                {/* Search results */}
+                {ticketSearch&&(()=>{
+                  const ql=ticketSearch.toLowerCase().trim();
+                  const results=ATT.filter(a=>a.price>0&&a.link&&!myTickets.includes(a.id)&&[a.title,a.cat,a.area].join(" ").toLowerCase().includes(ql)).slice(0,5);
+                  if(results.length===0)return<div style={{marginTop:8,padding:"14px",fontSize:12,color:T.inkMute,textAlign:"center"}}>No matches found</div>;
+                  return(
+                    <div style={{marginTop:8,background:"white",border:`1px solid ${T.line}`,borderRadius:14,overflow:"hidden"}}>
+                      {results.map((a,i)=>
+                        <div key={a.id} onClick={()=>{toggleTicket(a.id);setTicketSearch("")}} style={{display:"flex",alignItems:"center",gap:10,padding:"10px 14px",cursor:"pointer",borderBottom:i<results.length-1?`1px solid ${T.line}`:"none"}}>
+                          <img src={a.img} alt={a.title} style={{width:36,height:36,borderRadius:10,objectFit:"cover",flexShrink:0}}/>
+                          <div style={{flex:1,minWidth:0}}>
+                            <div style={{fontSize:13,fontWeight:700}}>{a.title}</div>
+                            <div style={{fontSize:10,color:T.inkMute,marginTop:1}}>{a.cat} · €{a.price}</div>
+                          </div>
+                          <div style={{width:26,height:26,borderRadius:13,background:T.okSoft,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}><Plus size={14} color={T.ok}/></div>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })()}
+              </div>
+
+              {/* Ticket list */}
+              {myTickets.length===0?
+                <div style={{textAlign:"center",padding:"40px 20px",background:"white",borderRadius:22,border:`1px solid ${T.line}`}}>
+                  <Ticket size={32} color={T.line}/>
+                  <div style={{fontSize:14,fontWeight:600,marginTop:12}}>No tickets yet</div>
+                  <div style={{fontSize:12,color:T.inkMute,marginTop:4,lineHeight:1.5,padding:"0 20px"}}>Search above to add tickets you already have, or tap "Got it" on plan cards</div>
+                </div>
+                :
+                <div style={{marginBottom:20}}>
+                  <div style={{fontSize:10,fontWeight:700,color:T.inkMute,textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:8}}>Your tickets ({myTickets.length})</div>
+                  {ATT.filter(a=>myTickets.includes(a.id)).map(a=>
+                    <div key={a.id} onClick={()=>setPreviewAtt(a)} style={{display:"flex",alignItems:"center",gap:12,borderRadius:20,background:"white",border:`1px solid ${T.ok}30`,padding:12,marginBottom:10,cursor:"pointer",position:"relative"}}>
+                      <div onClick={(e)=>{e.stopPropagation();toggleTicket(a.id)}} style={{position:"absolute",top:-6,right:-6,width:22,height:22,borderRadius:11,background:T.ink,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",boxShadow:"0 2px 6px rgba(0,0,0,0.15)"}}><X size={11} color="white"/></div>
+                      <div style={{position:"relative",flexShrink:0}}>
+                        <img src={a.img} alt={a.title} style={{width:52,height:52,borderRadius:14,objectFit:"cover"}}/>
+                        <div style={{position:"absolute",bottom:-3,right:-3,width:20,height:20,borderRadius:10,background:T.ok,border:"2px solid white",display:"flex",alignItems:"center",justifyContent:"center"}}><Check size={10} color="white"/></div>
+                      </div>
+                      <div style={{flex:1}}>
+                        <div style={{fontSize:14,fontWeight:700}}>{a.title}</div>
+                        <div style={{fontSize:11,color:T.inkMute,marginTop:2}}>{a.cat} · €{a.price}</div>
+                        <div style={{display:"inline-flex",alignItems:"center",gap:3,marginTop:5,padding:"2px 8px",borderRadius:6,background:T.okSoft,fontSize:10,fontWeight:700,color:T.ok}}>
+                          <Ticket size={9}/>Ticket ready
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Premium upsell: timed tickets */}
+                  {!isPremium&&myTickets.length>0&&
+                    <div onClick={()=>setPremiumOpen(true)} style={{marginTop:14,borderRadius:18,background:"linear-gradient(135deg,#0B1220,#1D4ED8)",padding:16,cursor:"pointer",color:"white",position:"relative",overflow:"hidden"}}>
+                      <div style={{position:"absolute",inset:0,opacity:0.08,backgroundImage:"radial-gradient(circle at 1px 1px,white 0.5px,transparent 0)",backgroundSize:"14px 14px"}}/>
+                      <div style={{position:"relative",display:"flex",alignItems:"center",gap:12}}>
+                        <div style={{width:42,height:42,borderRadius:14,background:"rgba(197,157,95,0.2)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,fontSize:20}}>⏰</div>
+                        <div style={{flex:1}}>
+                          <div style={{fontSize:13,fontWeight:700}}>Add dates & times to your tickets</div>
+                          <div style={{fontSize:11,color:"rgba(255,255,255,0.55)",marginTop:2}}>Premium auto-builds a route around your time slots</div>
+                        </div>
+                        <span style={{fontSize:11,color:T.gold}}>🔒</span>
+                      </div>
+                    </div>
+                  }
+                </div>
+              }
+            </>}
+          </div>}
         </div>
 
         {/* BOTTOM NAV */}
