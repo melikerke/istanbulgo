@@ -5,7 +5,7 @@ import {
   QrCode, Navigation, Landmark, ShieldCheck, Globe, Route, Headphones, Star, Wallet,
   Train, Languages, Compass, Info, ExternalLink, Zap, Bus, Car, Copy, AlertTriangle,
   CheckCircle, Sun, Anchor, Wifi, Coffee, Package, MessageCircle, X, Eye, Umbrella,
-  CloudRain, Baby, Utensils
+  CloudRain, Baby, Utensils, Menu
 } from "lucide-react";
 import AttractionSheet from './AttractionSheet';
 import MiniPreview from './MiniPreview';
@@ -17,6 +17,7 @@ import EsimSheet from './EsimSheet';
 import TransportSheet from './TransportSheet';
 import { generatePlan, INTERESTS, PACES } from './planEngine';
 import ItineraryMap from './ItineraryMap';
+import WeatherWidget from './WeatherWidget';
 
 const T={bg:"#F5F7FB",surface:"#FFFFFF",ink:"#0F172A",inkSoft:"#475569",inkMute:"#94A3B8",line:"#E2E8F0",primary:"#1D4ED8",primarySoft:"#DBEAFE",gold:"#C59D5F",goldSoft:"#FBF5EB",ok:"#059669",okSoft:"#D1FAE5",warn:"#D97706",warnSoft:"#FEF3C7",danger:"#E11D48",dangerSoft:"#FFE4E6",dark:"#0B1220",sh:{hero:"0 20px 50px rgba(15,23,42,0.16)"}};
 const fd="'Plus Jakarta Sans',system-ui,sans-serif";
@@ -164,6 +165,7 @@ export default function IstanbulGo(){
   const[myTickets,setMyTickets]=useState([]);
   const[tripTab,setTripTab]=useState("favorites");
   const[ticketSearch,setTicketSearch]=useState("");
+  const[menuOpen,setMenuOpen]=useState(false);
   const[planDays,setPlanDays]=useState(null);
   const[planPace,setPlanPace]=useState(null);
   const[planInterests,setPlanInterests]=useState([]);
@@ -326,7 +328,7 @@ export default function IstanbulGo(){
         {/* HEADER */}
         <div style={{position:"relative",overflow:"hidden",background:`linear-gradient(180deg,${T.dark} 0%,#16233B 58%,#1A2B45 100%)`,padding:"32px 20px 20px",color:"white"}}>
           <div style={{position:"absolute",inset:0,opacity:0.06,backgroundImage:"radial-gradient(circle at 1px 1px,white 0.5px,transparent 0)",backgroundSize:"20px 20px",pointerEvents:"none"}}/>
-          <div style={{position:"relative",display:"flex",justifyContent:"space-between",alignItems:"center"}}><div><div style={{display:"flex",alignItems:"center",gap:8}}><span style={{fontSize:24,fontWeight:800,letterSpacing:"-0.04em",fontFamily:fd}}>Istanbul</span><span style={{background:"rgba(255,255,255,0.1)",padding:"4px 8px",borderRadius:99,fontSize:11,fontWeight:700,letterSpacing:"0.14em",color:"#BFDBFE"}}>GO</span></div><div style={{marginTop:4,fontSize:11,textTransform:"uppercase",letterSpacing:"0.14em",color:"rgba(255,255,255,0.35)"}}>tourist super app</div></div><div style={{display:"flex",gap:8}}>{favs.size>0&&<div onClick={()=>goTab("trip")} style={{position:"relative",width:40,height:40,borderRadius:16,border:"1px solid rgba(255,255,255,0.1)",background:"rgba(255,255,255,0.05)",display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer"}}><Heart size={17} color="#FCA5A5" fill="#FCA5A5"/><div style={{position:"absolute",top:-2,right:-2,width:16,height:16,borderRadius:8,background:T.danger,fontSize:9,fontWeight:800,color:"white",display:"flex",alignItems:"center",justifyContent:"center"}}>{favs.size}</div></div>}<div onClick={()=>setLangOpen(true)} style={{width:40,height:40,borderRadius:16,border:"1px solid rgba(255,255,255,0.1)",background:"rgba(255,255,255,0.05)",display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",fontSize:16}}>{LANGUAGES.find(l=>l.code===lang)?.flag||"🌐"}</div><div onClick={()=>setAccountOpen(true)} style={{width:40,height:40,borderRadius:16,border:"1px solid rgba(255,255,255,0.1)",background:user?"rgba(29,78,216,0.3)":"rgba(255,255,255,0.05)",display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer"}}><User size={17} color={user?"#93C5FD":"rgba(255,255,255,0.6)"}/></div></div></div>
+          <div style={{position:"relative",display:"flex",justifyContent:"space-between",alignItems:"center"}}><div><div style={{display:"flex",alignItems:"center",gap:8}}><span style={{fontSize:24,fontWeight:800,letterSpacing:"-0.04em",fontFamily:fd}}>Istanbul</span><span style={{background:"rgba(255,255,255,0.1)",padding:"4px 8px",borderRadius:99,fontSize:11,fontWeight:700,letterSpacing:"0.14em",color:"#BFDBFE"}}>GO</span></div><div style={{marginTop:4,fontSize:11,textTransform:"uppercase",letterSpacing:"0.14em",color:"rgba(255,255,255,0.35)"}}>tourist super app</div></div><div style={{display:"flex",gap:8}}>{favs.size>0&&<div onClick={()=>goTab("trip")} style={{position:"relative",width:40,height:40,borderRadius:16,border:"1px solid rgba(255,255,255,0.1)",background:"rgba(255,255,255,0.05)",display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer"}}><Heart size={17} color="#FCA5A5" fill="#FCA5A5"/><div style={{position:"absolute",top:-2,right:-2,width:16,height:16,borderRadius:8,background:T.danger,fontSize:9,fontWeight:800,color:"white",display:"flex",alignItems:"center",justifyContent:"center"}}>{favs.size}</div></div>}<div onClick={()=>setLangOpen(true)} style={{width:40,height:40,borderRadius:16,border:"1px solid rgba(255,255,255,0.1)",background:"rgba(255,255,255,0.05)",display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",fontSize:16}}>{LANGUAGES.find(l=>l.code===lang)?.flag||"🌐"}</div><div onClick={()=>setMenuOpen(true)} style={{width:40,height:40,borderRadius:16,border:"1px solid rgba(255,255,255,0.1)",background:"rgba(255,255,255,0.05)",display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer"}}><Menu size={18} color="rgba(255,255,255,0.85)"/></div></div></div>
           {/* Search bar - inline input */}
           <div style={{position:"relative",zIndex:5,marginTop:18}}>
             <div style={{display:"flex",alignItems:"center",gap:10,background:"white",padding:"14px 16px",borderRadius:16}}>
@@ -548,7 +550,7 @@ export default function IstanbulGo(){
           {tab==="home"&&infoPage==="airport"&&<div><div style={{display:"flex",alignItems:"center",gap:12,marginBottom:20}}><Bk onClick={()=>setInfoPage(null)}/><div><Lbl>Guide</Lbl><div style={{fontSize:24,fontWeight:800,fontFamily:fd}}>Airport to Hotel</div></div></div>{[{Icon:Car,t:"Private Transfer",d:"Door-to-door",p:"€35-45",b:"Fastest",tone:T.primarySoft,ac:T.primary},{Icon:Bus,t:"Havaist Bus",d:"Every 30min, IST ↔ Taksim",p:"€12",b:"Best value",tone:T.okSoft,ac:T.ok},{Icon:Train,t:"Metro M11",d:"IST → Gayrettepe",p:"~€1",b:"Cheapest",tone:T.warnSoft,ac:T.warn}].map(o=><div key={o.t} style={{borderRadius:20,background:"white",border:`1px solid ${T.line}`,padding:16,marginBottom:12,display:"flex",alignItems:"center",gap:14}}><div style={{width:52,height:52,borderRadius:16,background:o.tone,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}><o.Icon size={22} color={o.ac}/></div><div style={{flex:1}}><div style={{display:"flex",alignItems:"center",gap:6}}><span style={{fontSize:15,fontWeight:700}}>{o.t}</span><span style={{fontSize:9,fontWeight:600,background:o.tone,color:o.ac,padding:"2px 7px",borderRadius:6}}>{o.b}</span></div><div style={{fontSize:12,color:T.inkMute}}>{o.d}</div></div><div style={{fontSize:18,fontWeight:800}}>{o.p}</div></div>)}</div>}
           {tab==="home"&&infoPage==="phrases"&&<div><div style={{display:"flex",alignItems:"center",gap:12,marginBottom:20}}><Bk onClick={()=>setInfoPage(null)}/><div><Lbl>Guide</Lbl><div style={{fontSize:24,fontWeight:800,fontFamily:fd}}>Turkish Phrases</div></div></div>{[{title:"Essentials",phrases:[{en:"Hello",tr:"Merhaba",pr:"mer-HA-ba"},{en:"Thank you",tr:"Teşekkürler",pr:"teh-shek-KOOR-ler"},{en:"Yes / No",tr:"Evet / Hayır",pr:"eh-VET / ha-YIR"},{en:"Please",tr:"Lütfen",pr:"LOOT-fen"},{en:"How much?",tr:"Ne kadar?",pr:"neh ka-DAR"},{en:"The check",tr:"Hesap lütfen",pr:"heh-SAP loot-FEN"}]}].map(g=><div key={g.title} style={{marginBottom:20}}><div style={{fontSize:13,fontWeight:700,marginBottom:10}}>{g.title}</div><div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>{g.phrases.map((p,i)=>{const id=g.title+i;const cp=copied===id;return<div key={i} onClick={()=>doCopy(p.tr,id)} style={{borderRadius:16,background:cp?T.okSoft:"white",border:`1px solid ${cp?T.ok+"40":T.line}`,padding:"12px 14px",cursor:"pointer"}}><div style={{display:"flex",justifyContent:"space-between",marginBottom:4}}><span style={{fontSize:11,color:T.inkMute}}>{p.en}</span>{cp?<Check size={12} color={T.ok}/>:<Copy size={12} color={T.inkMute}/>}</div><div style={{fontSize:16,fontWeight:700}}>{p.tr}</div><div style={{fontSize:10,color:T.inkMute,marginTop:2,fontStyle:"italic"}}>{p.pr}</div></div>})}</div></div>)}</div>}
           {tab==="home"&&infoPage==="safety"&&<div><div style={{display:"flex",alignItems:"center",gap:12,marginBottom:20}}><Bk onClick={()=>setInfoPage(null)}/><div><Lbl>Guide</Lbl><div style={{fontSize:24,fontWeight:800,fontFamily:fd}}>Safety & Scams</div></div></div>{[{t:"Shoe-shine trick",d:"Drop brush near you, charge €20",a:"Ignore & walk"},{t:"Friendly bar invite",d:"Stranger → bar → €500 bill",a:"Never follow strangers"},{t:"Taxi meter off",d:"Driver skips meter",a:"Use BiTaksi app"}].map(s=><div key={s.t} style={{borderRadius:18,background:T.dangerSoft,padding:16,marginBottom:10,borderLeft:`4px solid ${T.danger}`}}><div style={{display:"flex",alignItems:"center",gap:6,marginBottom:4}}><AlertTriangle size={14} color={T.danger}/><span style={{fontSize:14,fontWeight:700}}>{s.t}</span></div><div style={{fontSize:12,color:T.inkSoft,marginBottom:8}}>{s.d}</div><div style={{fontSize:12,fontWeight:600,color:T.ok,display:"flex",alignItems:"center",gap:4}}><CheckCircle size={12}/>{s.a}</div></div>)}</div>}
-          {tab==="home"&&infoPage==="live"&&<div><div style={{display:"flex",alignItems:"center",gap:12,marginBottom:20}}><Bk onClick={()=>setInfoPage(null)}/><div><Lbl>Live</Lbl><div style={{fontSize:24,fontWeight:800,fontFamily:fd}}>City Info</div></div></div><div style={{borderRadius:20,background:`linear-gradient(135deg,${T.dark},${T.primary})`,padding:20,color:"white"}}><div style={{display:"flex",justifyContent:"space-between"}}><div><div style={{fontSize:11,color:"rgba(255,255,255,0.5)",textTransform:"uppercase"}}>Istanbul today</div><div style={{fontSize:42,fontWeight:800,marginTop:4}}>22°C</div></div><Sun size={48} color="rgba(255,255,255,0.25)"/></div></div></div>}
+          {tab==="home"&&infoPage==="live"&&<div><div style={{display:"flex",alignItems:"center",gap:12,marginBottom:20}}><Bk onClick={()=>setInfoPage(null)}/><div><Lbl>Live</Lbl><div style={{fontSize:24,fontWeight:800,fontFamily:fd}}>City Info</div></div></div><WeatherWidget/></div>}
           {tab==="home"&&infoPage==="money"&&<div><div style={{display:"flex",alignItems:"center",gap:12,marginBottom:20}}><Bk onClick={()=>setInfoPage(null)}/><div><Lbl>Guide</Lbl><div style={{fontSize:24,fontWeight:800,fontFamily:fd}}>Money & Payments</div></div></div>{[{Icon:Wallet,t:"Currency",d:"Turkish Lira (₺). €1 ≈ ₺38-40."},{Icon:CreditCard,t:"Cards vs Cash",d:"Visa/MC tourist areas. Bazaar: cash only."},{Icon:Star,t:"Haggling",d:"Start at 40%. Walk away — they call back."}].map(c=><div key={c.t} style={{borderRadius:20,background:"white",border:`1px solid ${T.line}`,padding:16,marginBottom:12,display:"flex",gap:14}}><div style={{width:44,height:44,borderRadius:14,background:"#F1F5F9",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}><c.Icon size={20} color={T.ink}/></div><div><div style={{fontSize:14,fontWeight:700,marginBottom:4}}>{c.t}</div><div style={{fontSize:13,color:T.inkSoft,lineHeight:1.55}}>{c.d}</div></div></div>)}</div>}
 
           {/* ── PLAN ── */}
@@ -813,6 +815,106 @@ export default function IstanbulGo(){
 
         {/* BOTTOM NAV */}
         <div style={{position:"absolute",bottom:0,left:0,right:0,borderTop:`1px solid ${T.line}`,background:"rgba(255,255,255,0.95)",padding:"8px 12px 24px",backdropFilter:"blur(12px)"}}><div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr 1fr",gap:2}}>{[{id:"home",Icon:Compass,l:t("nav.home")},{id:"plan",Icon:Sparkles,l:t("nav.plan")},{id:"book",Icon:Ticket,l:t("nav.book")},{id:"explore",Icon:MapPin,l:t("nav.explore")},{id:"trip",Icon:Package,l:t("nav.trip")}].map(n=>{const on=tab===n.id;return<div key={n.id} onClick={()=>goTab(n.id)} style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",borderRadius:16,padding:"8px 4px 6px",cursor:"pointer",background:on?T.primarySoft:"transparent"}}><n.Icon size={19} color={on?T.primary:T.inkSoft} strokeWidth={on?2:1.75}/><span style={{marginTop:3,fontSize:10,fontWeight:600,color:on?T.primary:T.inkSoft}}>{n.l}</span></div>})}</div></div>
+
+        {/* HAMBURGER MENU — inside frame */}
+        {menuOpen && (
+          <div style={{position:"absolute",inset:0,zIndex:300,overflow:"hidden"}}>
+            <div onClick={()=>setMenuOpen(false)} style={{position:"absolute",inset:0,background:"rgba(15,23,42,0.55)",backdropFilter:"blur(6px)"}}/>
+            <div style={{position:"absolute",top:0,right:0,bottom:0,width:"85%",maxWidth:340,background:"white",boxShadow:"-10px 0 40px rgba(0,0,0,0.2)",display:"flex",flexDirection:"column",overflowY:"auto"}}>
+
+              {/* PROFILE HEADER */}
+              <div onClick={()=>{setMenuOpen(false);setTimeout(()=>setAccountOpen(true),200)}} style={{background:`linear-gradient(135deg,${T.dark},#16233B)`,padding:"24px 20px 20px",color:"white",cursor:"pointer",flexShrink:0}}>
+                <div style={{display:"flex",alignItems:"center",gap:12}}>
+                  <div style={{width:50,height:50,borderRadius:"50%",background:user?"rgba(29,78,216,0.3)":"rgba(255,255,255,0.1)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,border:"2px solid rgba(255,255,255,0.15)"}}>
+                    {user?<span style={{fontSize:18,fontWeight:800,color:"#BFDBFE"}}>{(user.name||user.email||"U")[0].toUpperCase()}</span>:<User size={22} color="rgba(255,255,255,0.6)"/>}
+                  </div>
+                  <div style={{flex:1,minWidth:0}}>
+                    <div style={{fontSize:15,fontWeight:800,fontFamily:fd}}>{user?(user.name||"Welcome back"):"Sign in"}</div>
+                    <div style={{fontSize:11,color:"rgba(255,255,255,0.55)",marginTop:2,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{user?user.email:"Save your trip across devices"}</div>
+                    {isPremium&&<div style={{marginTop:5,display:"inline-flex",alignItems:"center",gap:4,padding:"2px 8px",borderRadius:99,background:"rgba(197,157,95,0.2)",fontSize:9,fontWeight:700,color:T.gold}}>✨ PREMIUM</div>}
+                  </div>
+                  <ChevronRight size={16} color="rgba(255,255,255,0.4)"/>
+                </div>
+              </div>
+
+              {/* DISCOVER — Guides */}
+              <div style={{padding:"16px 20px 6px",fontSize:10,fontWeight:700,color:T.inkMute,textTransform:"uppercase",letterSpacing:"0.12em"}}>Discover</div>
+              {GUIDES.map(g=>(
+                <div key={g.id} onClick={()=>{setMenuOpen(false);setTimeout(()=>{goTab("explore");setGuideId(g.id)},200)}} style={{display:"flex",alignItems:"center",gap:12,padding:"10px 20px",cursor:"pointer"}}>
+                  <div style={{width:32,height:32,borderRadius:10,background:"#F1F5F9",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+                    <Compass size={16} color={T.inkSoft}/>
+                  </div>
+                  <div style={{flex:1,minWidth:0}}>
+                    <div style={{fontSize:13,fontWeight:700,color:T.ink}}>{g.title}</div>
+                    <div style={{fontSize:10,color:T.inkMute,marginTop:1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{g.sub}</div>
+                  </div>
+                  <ChevronRight size={14} color={T.inkMute}/>
+                </div>
+              ))}
+
+              <div style={{height:1,background:T.line,margin:"6px 20px"}}/>
+
+              {/* ESSENTIALS */}
+              <div style={{padding:"12px 20px 6px",fontSize:10,fontWeight:700,color:T.inkMute,textTransform:"uppercase",letterSpacing:"0.12em"}}>Essentials</div>
+              {[
+                {Icon:Ticket,title:"Tickets & Tours",sub:"Browse all bookings",action:()=>goTab("book"),color:"#BE185D",bg:"#FCE7F3"},
+                {Icon:Train,title:"Public Transport",sub:"Metro, tram, ferry",action:()=>setTransOpen(true),color:T.ok,bg:T.okSoft},
+                {Icon:Smartphone,title:"eSIM & Data",sub:"Stay connected",action:()=>setEsimOpen(true),color:"#6D28D9",bg:"#EDE9FE"},
+                {Icon:Sparkles,title:"Smart Plan",sub:"Build your itinerary",action:()=>goTab("plan"),color:T.primary,bg:T.primarySoft},
+              ].map(item=>(
+                <div key={item.title} onClick={()=>{setMenuOpen(false);setTimeout(item.action,200)}} style={{display:"flex",alignItems:"center",gap:12,padding:"10px 20px",cursor:"pointer"}}>
+                  <div style={{width:32,height:32,borderRadius:10,background:item.bg,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+                    <item.Icon size={16} color={item.color} strokeWidth={1.9}/>
+                  </div>
+                  <div style={{flex:1,minWidth:0}}>
+                    <div style={{fontSize:13,fontWeight:700,color:T.ink}}>{item.title}</div>
+                    <div style={{fontSize:10,color:T.inkMute,marginTop:1}}>{item.sub}</div>
+                  </div>
+                  <ChevronRight size={14} color={T.inkMute}/>
+                </div>
+              ))}
+
+              <div style={{height:1,background:T.line,margin:"6px 20px"}}/>
+
+              {/* KNOW BEFORE YOU GO */}
+              <div style={{padding:"12px 20px 6px",fontSize:10,fontWeight:700,color:T.inkMute,textTransform:"uppercase",letterSpacing:"0.12em"}}>Know before you go</div>
+              {[
+                {Icon:Plane,title:"Airport Guide",sub:"Transfers & arrivals",action:()=>setInfoPage("airport"),color:T.primary,bg:T.primarySoft},
+                {Icon:Wallet,title:"Money & Payments",sub:"Currency, ATMs",action:()=>setInfoPage("money"),color:T.ok,bg:T.okSoft},
+                {Icon:Languages,title:"Turkish Phrases",sub:"Essentials to use",action:()=>setInfoPage("phrases"),color:"#BE185D",bg:"#FCE7F3"},
+                {Icon:ShieldCheck,title:"Safety & Scams",sub:"Street smarts",action:()=>setInfoPage("safety"),color:T.danger,bg:T.dangerSoft},
+                {Icon:Globe,title:"Live City Info",sub:"Weather & updates",action:()=>setInfoPage("live"),color:T.warn,bg:T.warnSoft},
+              ].map(item=>(
+                <div key={item.title} onClick={()=>{setMenuOpen(false);setTimeout(()=>{goTab("home");item.action()},200)}} style={{display:"flex",alignItems:"center",gap:12,padding:"10px 20px",cursor:"pointer"}}>
+                  <div style={{width:32,height:32,borderRadius:10,background:item.bg,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+                    <item.Icon size={16} color={item.color} strokeWidth={1.9}/>
+                  </div>
+                  <div style={{flex:1,minWidth:0}}>
+                    <div style={{fontSize:13,fontWeight:700,color:T.ink}}>{item.title}</div>
+                    <div style={{fontSize:10,color:T.inkMute,marginTop:1}}>{item.sub}</div>
+                  </div>
+                  <ChevronRight size={14} color={T.inkMute}/>
+                </div>
+              ))}
+
+              {/* PREMIUM upsell */}
+              {!isPremium&&(
+                <>
+                  <div style={{height:1,background:T.line,margin:"6px 20px"}}/>
+                  <div onClick={()=>{setMenuOpen(false);setTimeout(()=>setPremiumOpen(true),200)}} style={{margin:"10px 20px 24px",borderRadius:16,background:`linear-gradient(135deg,${T.dark},#1D4ED8)`,padding:14,cursor:"pointer",color:"white",display:"flex",alignItems:"center",gap:12}}>
+                    <div style={{width:38,height:38,borderRadius:12,background:"rgba(197,157,95,0.2)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}><Sparkles size={18} color={T.gold}/></div>
+                    <div style={{flex:1}}>
+                      <div style={{fontSize:12,fontWeight:800}}>Upgrade to Premium</div>
+                      <div style={{fontSize:10,color:"rgba(255,255,255,0.65)",marginTop:2}}>AI routing · crowd alerts</div>
+                    </div>
+                    <div style={{fontSize:11,fontWeight:700,color:T.gold}}>€4.99</div>
+                  </div>
+                </>
+              )}
+
+            </div>
+          </div>
+        )}
       </div>
 
       {/* MINI PREVIEW */}
