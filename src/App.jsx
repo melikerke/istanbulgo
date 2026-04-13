@@ -15,36 +15,46 @@ import { useLanguage, LANGUAGES } from './LanguageContext';
 import BookingOverlay from './BookingOverlay';
 import EsimSheet from './EsimSheet';
 import TransportSheet from './TransportSheet';
+import { generatePlan, INTERESTS, PACES } from './planEngine';
+import ItineraryMap from './ItineraryMap';
 
 const T={bg:"#F5F7FB",surface:"#FFFFFF",ink:"#0F172A",inkSoft:"#475569",inkMute:"#94A3B8",line:"#E2E8F0",primary:"#1D4ED8",primarySoft:"#DBEAFE",gold:"#C59D5F",goldSoft:"#FBF5EB",ok:"#059669",okSoft:"#D1FAE5",warn:"#D97706",warnSoft:"#FEF3C7",danger:"#E11D48",dangerSoft:"#FFE4E6",dark:"#0B1220",sh:{hero:"0 20px 50px rgba(15,23,42,0.16)"}};
 const fd="'Plus Jakarta Sans',system-ui,sans-serif";
 const fi="'Inter',system-ui,sans-serif";
 
 const ATT=[
-  {id:"hagia",title:"Hagia Sophia",cat:"Landmark",price:25,dur:"1.5h",rating:4.9,img:"/hagia.jpg",badge:"Most booked",skip:true,link:"https://gyg.me/9TxDoMwH",area:"Sultanahmet",hook:"Must-see landmark",teaser:"A place where two empires collide — and you feel it instantly."},
-  {id:"basilica",title:"Basilica Cistern",cat:"Museum",price:20,dur:"1h",rating:4.8,img:"/basilica.jpg",badge:"Fast entry",skip:true,link:"https://gyg.me/HyHBAHab",area:"Sultanahmet",hook:"Unreal atmosphere",teaser:"Dark, mysterious, and surprisingly beautiful."},
-  {id:"topkapi",title:"Topkapi Palace",cat:"Palace",price:30,dur:"2.5h",rating:4.9,img:"/topkapi.jpg",badge:"High value",skip:true,link:"https://gyg.me/zHWCA6tY",area:"Sultanahmet",hook:"Historic must-visit",teaser:"Not just a palace — a whole world behind the gates."},
-  {id:"cruise",title:"Bosphorus Cruise",cat:"Experience",price:18,dur:"2h",rating:4.7,img:"/cruise.jpg",badge:"Sunset pick",skip:false,link:"https://gyg.me/Ou6l1R0E",area:"Eminönü",hook:"See two continents",teaser:"Palaces, bridges, and skyline — all in one ride."},
-  {id:"hammam",title:"Turkish Bath",cat:"Wellness",price:45,dur:"1.5h",rating:4.8,img:"/hammam.jpg",badge:"Authentic",skip:false,link:"https://gyg.me/wdfMolAo",area:"Various",hook:"Authentic ritual",teaser:"Steam, marble, and a reset you didn't know you needed."},
-  {id:"galata",title:"Galata Tower",cat:"Viewpoint",price:15,dur:"45min",rating:4.6,img:"/galata.jpg",badge:"360° view",skip:true,link:"https://gyg.me/NCnQgklA",area:"Beyoğlu",hook:"Best city views",teaser:"360° Istanbul in one shot."},
-  {id:"dolma",title:"Dolmabahçe Palace",cat:"Palace",price:28,dur:"2h",rating:4.7,img:"/dolma.jpg",badge:"Crystal stairs",skip:true,link:"https://gyg.me/FhcexQTY",area:"Beşiktaş",hook:"Luxury palace experience",teaser:"European luxury in the heart of the city."},
-  {id:"dervish",title:"Whirling Dervish",cat:"Culture",price:22,dur:"1h",rating:4.9,img:"/dervish.jpg",badge:"Unique",skip:false,link:"https://gyg.me/MZyCEeij",area:"Various",hook:"Spiritual ceremony",teaser:"Quiet, hypnotic, and deeply moving — not what you expect."},
-  {id:"islands",title:"Princes' Islands",cat:"Day Trip",price:35,dur:"Full day",rating:4.7,img:"/islands.jpg",badge:"Day trip",skip:false,link:"https://gyg.me/50M4D75g",area:"Sea of Marmara",hook:"Car-free escape",teaser:"No cars, no rush — just sea breeze and pine trees."},
-  {id:"cooking",title:"Turkish Cooking Class",cat:"Experience",price:50,dur:"4h",rating:4.9,img:"/cooking.jpg",badge:"Top rated",skip:false,link:"https://gyg.me/TyiQJFVC",area:"Various",hook:"Cook like a local",teaser:"Shop, cook, eat — and take the recipes home."},
-  {id:"foodtour",title:"Istanbul Food Tour",cat:"Experience",price:40,dur:"3.5h",rating:4.8,img:"/foodtour.jpg",badge:"Bestseller",skip:false,link:"https://gyg.me/0KLewel5",area:"Various",hook:"Taste the real city",teaser:"The real food scene — no guidebook needed."},
-  {id:"hoponoff",title:"Hop-on Hop-off Bus",cat:"Transport",price:28,dur:"Full day",rating:4.4,img:"/hoponoff.jpg",badge:"Flexible",skip:false,link:"https://gyg.me/0hgJBsgt",area:"City-wide",hook:"Day 1 orientation",teaser:"Sit back, ride around, and get oriented."},
-  {id:"nightcruise",title:"Dinner Cruise",cat:"Experience",price:55,dur:"3h",rating:4.6,img:"/nightcruise.jpg",badge:"Romantic",skip:false,link:"https://gyg.me/8f0VjFBO",area:"Eminönü",hook:"Romantic night out",teaser:"City lights, bridge glow, and dinner on the water."},
-  {id:"aquarium",title:"Istanbul Aquarium",cat:"Family",price:22,dur:"2h",rating:4.5,img:"/aquarium.jpg",badge:"Family pick",skip:true,link:"https://gyg.me/8drJtohU",area:"Florya",hook:"Family favorite",teaser:"Sharks, tunnels, and a guaranteed good time for kids."},
-  {id:"maiden",title:"Maiden's Tower",cat:"Landmark",price:20,dur:"1.5h",rating:4.7,img:"/maiden.jpg",badge:"Iconic",skip:false,link:"https://gyg.me/3vDd9xwf",area:"Üsküdar",hook:"Best sunset spot",teaser:"Small tower, big atmosphere."},
+  {id:"hagia",title:"Hagia Sophia",cat:"Landmark",price:25,dur:"1.5h",rating:4.9,img:"/hagia.jpg",badge:"Most booked",skip:true,link:"https://gyg.me/9TxDoMwH",area:"Sultanahmet",hook:"Must-see landmark",teaser:"A place where two empires collide — and you feel it instantly.",lat:41.0086,lng:28.9802},
+  {id:"basilica",title:"Basilica Cistern",cat:"Museum",price:20,dur:"1h",rating:4.8,img:"/basilica.jpg",badge:"Fast entry",skip:true,link:"https://gyg.me/HyHBAHab",area:"Sultanahmet",hook:"Unreal atmosphere",teaser:"Dark, mysterious, and surprisingly beautiful.",lat:41.0084,lng:28.9779},
+  {id:"topkapi",title:"Topkapi Palace",cat:"Palace",price:30,dur:"2.5h",rating:4.9,img:"/topkapi.jpg",badge:"High value",skip:true,link:"https://gyg.me/zHWCA6tY",area:"Sultanahmet",hook:"Historic must-visit",teaser:"Not just a palace — a whole world behind the gates.",lat:41.0115,lng:28.9833},
+  {id:"cruise",title:"Bosphorus Cruise",cat:"Experience",price:18,dur:"2h",rating:4.7,img:"/cruise.jpg",badge:"Sunset pick",skip:false,link:"https://gyg.me/Ou6l1R0E",area:"Eminönü",hook:"See two continents",teaser:"Palaces, bridges, and skyline — all in one ride.",lat:41.017,lng:28.9744},
+  {id:"hammam",title:"Turkish Bath",cat:"Wellness",price:45,dur:"1.5h",rating:4.8,img:"/hammam.jpg",badge:"Authentic",skip:false,link:"https://gyg.me/wdfMolAo",area:"Various",hook:"Authentic ritual",teaser:"Steam, marble, and a reset you didn't know you needed.",lat:41.0257,lng:28.9787},
+  {id:"galata",title:"Galata Tower",cat:"Viewpoint",price:15,dur:"45min",rating:4.6,img:"/galata.jpg",badge:"360° view",skip:true,link:"https://gyg.me/NCnQgklA",area:"Beyoğlu",hook:"Best city views",teaser:"360° Istanbul in one shot.",lat:41.0256,lng:28.9742},
+  {id:"dolma",title:"Dolmabahçe Palace",cat:"Palace",price:28,dur:"2h",rating:4.7,img:"/dolma.jpg",badge:"Crystal stairs",skip:true,link:"https://gyg.me/FhcexQTY",area:"Beşiktaş",hook:"Luxury palace experience",teaser:"European luxury in the heart of the city.",lat:41.0391,lng:29.0001},
+  {id:"dervish",title:"Whirling Dervish",cat:"Culture",price:22,dur:"1h",rating:4.9,img:"/dervish.jpg",badge:"Unique",skip:false,link:"https://gyg.me/MZyCEeij",area:"Various",hook:"Spiritual ceremony",teaser:"Quiet, hypnotic, and deeply moving — not what you expect.",lat:41.0255,lng:28.9747},
+  {id:"islands",title:"Princes' Islands",cat:"Day Trip",price:35,dur:"Full day",rating:4.7,img:"/islands.jpg",badge:"Day trip",skip:false,link:"https://gyg.me/50M4D75g",area:"Sea of Marmara",hook:"Car-free escape",teaser:"No cars, no rush — just sea breeze and pine trees.",lat:40.876,lng:29.1256},
+  {id:"cooking",title:"Turkish Cooking Class",cat:"Experience",price:50,dur:"4h",rating:4.9,img:"/cooking.jpg",badge:"Top rated",skip:false,link:"https://gyg.me/TyiQJFVC",area:"Various",hook:"Cook like a local",teaser:"Shop, cook, eat — and take the recipes home.",lat:41.01,lng:28.975},
+  {id:"foodtour",title:"Istanbul Food Tour",cat:"Experience",price:40,dur:"3.5h",rating:4.8,img:"/foodtour.jpg",badge:"Bestseller",skip:false,link:"https://gyg.me/0KLewel5",area:"Various",hook:"Taste the real city",teaser:"The real food scene — no guidebook needed.",lat:41.018,lng:28.98},
+  {id:"hoponoff",title:"Hop-on Hop-off Bus",cat:"Transport",price:28,dur:"Full day",rating:4.4,img:"/hoponoff.jpg",badge:"Flexible",skip:false,link:"https://gyg.me/0hgJBsgt",area:"City-wide",hook:"Day 1 orientation",teaser:"Sit back, ride around, and get oriented.",lat:41.0082,lng:28.9784},
+  {id:"nightcruise",title:"Dinner Cruise",cat:"Experience",price:55,dur:"3h",rating:4.6,img:"/nightcruise.jpg",badge:"Romantic",skip:false,link:"https://gyg.me/8f0VjFBO",area:"Eminönü",hook:"Romantic night out",teaser:"City lights, bridge glow, and dinner on the water.",lat:41.017,lng:28.9744},
+  {id:"aquarium",title:"Istanbul Aquarium",cat:"Family",price:22,dur:"2h",rating:4.5,img:"/aquarium.jpg",badge:"Family pick",skip:true,link:"https://gyg.me/8drJtohU",area:"Florya",hook:"Family favorite",teaser:"Sharks, tunnels, and a guaranteed good time for kids.",lat:40.9825,lng:28.7847},
+  {id:"maiden",title:"Maiden's Tower",cat:"Landmark",price:20,dur:"1.5h",rating:4.7,img:"/maiden.jpg",badge:"Iconic",skip:false,link:"https://gyg.me/3vDd9xwf",area:"Üsküdar",hook:"Best sunset spot",teaser:"Small tower, big atmosphere.",lat:41.0211,lng:29.0041},
+  {id:"bluemosque",title:"Blue Mosque",cat:"Landmark",price:0,dur:"30–45min",rating:4.8,img:"/bluemosque.jpg",badge:"Free entry",skip:false,link:"",area:"Sultanahmet",hook:"Iconic & active mosque",teaser:"Calm, iconic, and still an active mosque — timing is everything.",lat:41.0054,lng:28.9768},
+  {id:"grandbazaar",title:"Grand Bazaar",cat:"Shopping",price:0,dur:"1.5–2h",rating:4.6,img:"/grandbazaar.jpg",badge:"4,000+ shops",skip:false,link:"",area:"Beyazıt",hook:"Easy to get lost — that's the point",teaser:"Colors, chaos, and endless shops — it's about the experience.",lat:41.0106,lng:28.9681},
+  {id:"spicebazaar",title:"Spice Bazaar",cat:"Shopping",price:0,dur:"45min–1h",rating:4.5,img:"/spicebazaar.jpg",badge:"Quick stop",skip:false,link:"",area:"Eminönü",hook:"Quick local vibes",teaser:"Smells, flavors, and quick souvenir shopping.",lat:41.0165,lng:28.9706},
+  {id:"balat",title:"Balat & Fener",cat:"Neighborhood",price:0,dur:"2–3h",rating:4.7,img:"/balat.jpg",badge:"Colorful streets",skip:false,link:"",area:"Fatih",hook:"More than just photos",teaser:"Colorful streets with real stories — walk slowly here.",lat:41.0292,lng:28.9494},
+  {id:"taksim",title:"Taksim & İstiklal",cat:"Neighborhood",price:0,dur:"2–3h",rating:4.5,img:"/taksim.jpg",badge:"City center",skip:false,link:"",area:"Beyoğlu",hook:"Always alive",teaser:"Street music, shops, food — the heart of modern Istanbul.",lat:41.037,lng:28.985},
+  {id:"ortakoy",title:"Ortaköy",cat:"Neighborhood",price:0,dur:"1–2h",rating:4.6,img:"/ortakoy.jpg",badge:"Photo spot",skip:false,link:"",area:"Beşiktaş",hook:"Famous photo spot",teaser:"That famous mosque + bridge photo? It's here.",lat:41.0475,lng:29.0272},
+  {id:"pierreloti",title:"Pierre Loti Hill",cat:"Viewpoint",price:0,dur:"1–1.5h",rating:4.6,img:"/pierreloti.jpg",badge:"Hidden gem",skip:false,link:"",area:"Eyüp",hook:"Peaceful city view",teaser:"Quiet, scenic, and beautifully underrated.",lat:41.0507,lng:28.9345},
+  {id:"camlica",title:"Çamlıca Hill",cat:"Viewpoint",price:0,dur:"1–2h",rating:4.7,img:"/camlica.jpg",badge:"Panoramic",skip:false,link:"",area:"Üsküdar",hook:"Best panorama, fewest tourists",teaser:"The highest view in Istanbul — and almost no crowds.",lat:41.0308,lng:29.0689},
 ];
 
 const GUIDES=[
-  {id:"must-see",title:"Must-See Places",sub:"The headline sights worth planning around",emoji:"🏛️",ids:["hagia","basilica","topkapi","galata","dolma","maiden"],pick:"hagia"},
-  {id:"hidden-gems",title:"Hidden Gems",sub:"Smaller finds with big character",emoji:"💎",ids:["dervish","cooking","foodtour","hammam","nightcruise","maiden"],pick:"dervish"},
+  {id:"must-see",title:"Must-See Places",sub:"The headline sights worth planning around",emoji:"🏛️",ids:["hagia","basilica","topkapi","bluemosque","galata","dolma","maiden","grandbazaar"],pick:"hagia"},
+  {id:"hidden-gems",title:"Hidden Gems",sub:"Smaller finds with big character",emoji:"💎",ids:["dervish","balat","pierreloti","camlica","cooking","foodtour","ortakoy"],pick:"balat"},
   {id:"experiences",title:"Best Experiences",sub:"The moments you will remember long after the flight home",emoji:"✨",ids:["cruise","nightcruise","cooking","foodtour","dervish","islands","hammam"],pick:"cooking"},
   {id:"family",title:"Family Picks",sub:"Easy wins for kids and grown-ups",emoji:"👨‍👩‍👧‍👦",ids:["aquarium","islands","hoponoff","cruise","galata"],pick:"aquarium"},
-  {id:"rainy",title:"Rainy Day Ideas",sub:"Smart indoor picks for grey-weather days",emoji:"🌧️",ids:["basilica","aquarium","hammam","cooking","dervish"],pick:"hammam"},
-  {id:"food",title:"Food & Markets",sub:"Street eats, market wanders, and local staples",emoji:"🍽️",ids:["cooking","foodtour"],pick:"foodtour"},
+  {id:"rainy",title:"Rainy Day Ideas",sub:"Smart indoor picks for grey-weather days",emoji:"🌧️",ids:["basilica","aquarium","hammam","cooking","grandbazaar","spicebazaar"],pick:"hammam"},
+  {id:"food",title:"Food & Markets",sub:"Street eats, market wanders, and local staples",emoji:"🍽️",ids:["cooking","foodtour","spicebazaar","grandbazaar","ortakoy"],pick:"foodtour"},
   {id:"neighborhoods",title:"Neighborhood Guides",sub:"Choose the vibe, then choose the district",emoji:"🏘️",ids:[],pick:null},
 ];
 
@@ -135,9 +145,9 @@ function GuidePage({guide,onBack,onPreview,onDetail,onFav,favs}){
 }
 
 export default function IstanbulGo(){
-  const[boarded,setBoarded]=useState(false);const[obStep,setObStep]=useState(0);const[obData,setObData]=useState({days:3,interests:[],area:"sultanahmet"});
+  const[boarded,setBoarded]=useState(false);const[obStep,setObStep]=useState(0);const[obDays,setObDays]=useState(3);const[obPace,setObPace]=useState(null);const[obInterests,setObInterests]=useState([]);
   const[tab,setTab]=useState("home");const[favs,setFavs]=useState(new Set());const[infoPage,setInfoPage]=useState(null);const[transOpen,setTransOpen]=useState(false);
-  const[planStep,setPlanStep]=useState(0);const[planDays,setPlanDays]=useState(3);const[planSel,setPlanSel]=useState(new Set(["hagia","basilica","topkapi","cruise"]));const[planTempo,setPlanTempo]=useState("balanced");const[activeDay,setActiveDay]=useState(1);
+  const[activeDay,setActiveDay]=useState(1);
   const[copied,setCopied]=useState(null);const[bookFilter,setBookFilter]=useState("All");
   const[detailAtt,setDetailAtt]=useState(null);
   const[previewAtt,setPreviewAtt]=useState(null);
@@ -149,6 +159,13 @@ export default function IstanbulGo(){
   const[langOpen,setLangOpen]=useState(false);
   const[bookingData,setBookingData]=useState(null);
   const[esimOpen,setEsimOpen]=useState(false);
+  const[searchQuery,setSearchQuery]=useState("");
+  const[searchFocused,setSearchFocused]=useState(false);
+  const[planDays,setPlanDays]=useState(null);
+  const[planPace,setPlanPace]=useState(null);
+  const[planInterests,setPlanInterests]=useState([]);
+  const[planResult,setPlanResult]=useState(null);
+  const[planStep,setPlanStep]=useState(0); // 0: intro, 1: days, 2: pace, 3: interests, 4: result
   const { t, lang, setLang } = useLanguage();
 
   const handleBook = (att) => setBookingData({ title: att.title, price: att.price, link: att.link });
@@ -169,8 +186,6 @@ export default function IstanbulGo(){
     setFavs(s);
     localStorage.setItem("favs",JSON.stringify([...s]));
   };
-  const toggleSel=id=>{const s=new Set(planSel);s.has(id)?s.delete(id):s.add(id);setPlanSel(s)};
-  const activePlan=PLAN_DAYS.find(d=>d.day===activeDay);
   const doCopy=(text,id)=>{navigator.clipboard?.writeText(text).catch(()=>{});setCopied(id);setTimeout(()=>setCopied(null),1500)};
   const goTab=t=>{setTab(t);setInfoPage(null);setGuideId(null)};
   const cats=["All",...[...new Set(ATT.map(a=>a.cat))]];
@@ -179,13 +194,102 @@ export default function IstanbulGo(){
 
   // ═══ ONBOARDING ═══
   if(!boarded){
+    const Skip = () => <div onClick={()=>{setBoarded(true);setPlanStep(0)}} style={{textAlign:"center",marginTop:12,fontSize:13,color:T.inkMute,cursor:"pointer"}}>Skip for now</div>;
     const steps=[
-      <div key={0} style={{textAlign:"center",padding:"60px 24px 40px"}}><div style={{fontSize:48,marginBottom:16}}>🌊</div><div style={{fontFamily:fd,fontSize:28,fontWeight:800,letterSpacing:"-0.03em",color:T.ink}}>Welcome to Istanbul</div><div style={{fontSize:14,color:T.inkSoft,marginTop:8,lineHeight:1.6}}>Your personal city companion — from airport to checkout day.</div><div onClick={()=>setObStep(1)} style={{marginTop:32,background:T.primary,color:"white",padding:"14px 0",borderRadius:16,fontWeight:700,fontSize:15,cursor:"pointer"}}>Let's get started</div></div>,
-      <div key={1} style={{padding:"40px 24px"}}><Lbl>Step 1 of 3</Lbl><div style={{fontFamily:fd,fontSize:24,fontWeight:800,color:T.ink,marginBottom:24}}>How long are you staying?</div><div style={{display:"flex",gap:10,flexWrap:"wrap",marginBottom:32}}>{[1,2,3,4,5,7].map(d=><div key={d} onClick={()=>setObData({...obData,days:d})} style={{width:56,height:56,borderRadius:18,display:"flex",alignItems:"center",justifyContent:"center",fontSize:18,fontWeight:700,cursor:"pointer",background:obData.days===d?T.dark:"white",color:obData.days===d?T.gold:T.ink,boxShadow:obData.days===d?"0 6px 20px rgba(11,18,32,0.2)":`0 0 0 1px ${T.line}`}}>{d}</div>)}</div><div onClick={()=>setObStep(2)} style={{background:T.primary,color:"white",padding:"14px 0",borderRadius:16,fontWeight:700,fontSize:15,cursor:"pointer",textAlign:"center"}}>Continue</div></div>,
-      <div key={2} style={{padding:"40px 24px"}}><Lbl>Step 2 of 3</Lbl><div style={{fontFamily:fd,fontSize:24,fontWeight:800,color:T.ink,marginBottom:24}}>What excites you?</div><div style={{display:"flex",flexWrap:"wrap",gap:8,marginBottom:32}}>{["History & Architecture","Food & Cuisine","Shopping & Bazaars","Nightlife","Nature & Bosphorus","Wellness & Hammam","Culture & Arts","Family Activities"].map(i=>{const on=obData.interests.includes(i);return<div key={i} onClick={()=>setObData({...obData,interests:on?obData.interests.filter(x=>x!==i):[...obData.interests,i]})} style={{padding:"10px 16px",borderRadius:24,fontSize:13,fontWeight:500,cursor:"pointer",display:"flex",alignItems:"center",gap:6,background:on?T.dark:"white",color:on?"white":T.ink,boxShadow:on?"0 4px 14px rgba(11,18,32,0.2)":`0 0 0 1px ${T.line}`}}>{i}{on&&<Check size={12}/>}</div>})}</div><div onClick={()=>setObStep(3)} style={{background:T.primary,color:"white",padding:"14px 0",borderRadius:16,fontWeight:700,fontSize:15,cursor:"pointer",textAlign:"center"}}>Continue</div></div>,
-      <div key={3} style={{padding:"40px 24px"}}><Lbl>Step 3 of 3</Lbl><div style={{fontFamily:fd,fontSize:24,fontWeight:800,color:T.ink,marginBottom:24}}>Where are you staying?</div><div style={{display:"flex",flexDirection:"column",gap:8,marginBottom:32}}>{[{id:"sultanahmet",n:"Sultanahmet / Old Town",d:"Walking distance to main sights"},{id:"taksim",n:"Taksim / Beyoğlu",d:"Nightlife, shopping, modern side"},{id:"kadikoy",n:"Kadıköy / Asian Side",d:"Local vibes, food scene"},{id:"other",n:"Other / Not sure yet",d:"We'll figure it out"}].map(a=><div key={a.id} onClick={()=>setObData({...obData,area:a.id})} style={{borderRadius:18,padding:"16px 18px",cursor:"pointer",background:obData.area===a.id?T.dark:"white",color:obData.area===a.id?"white":T.ink,boxShadow:obData.area===a.id?"0 6px 20px rgba(11,18,32,0.2)":`0 0 0 1px ${T.line}`}}><div style={{fontSize:15,fontWeight:600}}>{a.n}</div><div style={{fontSize:12,opacity:0.6,marginTop:2}}>{a.d}</div></div>)}</div><div onClick={()=>{setPlanDays(obData.days);setPlanStep(4);setBoarded(true)}} style={{background:T.primary,color:"white",padding:"14px 0",borderRadius:16,fontWeight:700,fontSize:15,cursor:"pointer",textAlign:"center",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}><Sparkles size={16}/>Build my trip</div><div onClick={()=>{setBoarded(true);setPlanStep(0)}} style={{textAlign:"center",marginTop:12,fontSize:13,color:T.inkMute,cursor:"pointer"}}>Skip for now</div></div>,
+      <div key={0} style={{textAlign:"center",padding:"60px 24px 40px"}}>
+        <div style={{fontSize:48,marginBottom:16}}>🌊</div>
+        <div style={{fontFamily:fd,fontSize:28,fontWeight:800,letterSpacing:"-0.03em",color:T.ink}}>Welcome to Istanbul</div>
+        <div style={{fontSize:14,color:T.inkSoft,marginTop:8,lineHeight:1.6}}>Your smart city companion — from landing to last dinner.</div>
+        <div onClick={()=>setObStep(1)} style={{marginTop:32,background:T.primary,color:"white",padding:"14px 0",borderRadius:16,fontWeight:700,fontSize:15,cursor:"pointer"}}>Let's build your trip</div>
+        <Skip/>
+      </div>,
+      <div key={1} style={{padding:"40px 24px"}}>
+        <Lbl>Step 1 of 3</Lbl>
+        <div style={{fontFamily:fd,fontSize:24,fontWeight:800,color:T.ink,marginBottom:8}}>How many days do you have?</div>
+        <div style={{fontSize:13,color:T.inkMute,marginBottom:32}}>Slide to choose — 1 to 7 days.</div>
+        {/* Big number */}
+        <div style={{textAlign:"center",marginBottom:20}}>
+          <div style={{fontSize:72,fontWeight:800,color:T.dark,fontFamily:fd,lineHeight:1,letterSpacing:"-0.04em"}}>{obDays}</div>
+          <div style={{fontSize:13,fontWeight:600,color:T.inkMute,marginTop:4}}>{obDays===1?"day":"days"} in Istanbul</div>
+        </div>
+        {/* Slider */}
+        <div style={{padding:"0 8px",marginBottom:32}}>
+          <input
+            type="range"
+            min="1"
+            max="7"
+            value={obDays}
+            onChange={(e)=>setObDays(parseInt(e.target.value))}
+            style={{width:"100%",height:8,borderRadius:4,background:`linear-gradient(to right, ${T.primary} 0%, ${T.primary} ${((obDays-1)/6)*100}%, ${T.line} ${((obDays-1)/6)*100}%, ${T.line} 100%)`,appearance:"none",WebkitAppearance:"none",outline:"none",cursor:"pointer"}}
+          />
+          <style>{`
+            input[type="range"]::-webkit-slider-thumb {
+              appearance: none; -webkit-appearance: none;
+              width: 28px; height: 28px; border-radius: 14px;
+              background: ${T.dark}; cursor: pointer;
+              box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+              border: 3px solid white;
+            }
+            input[type="range"]::-moz-range-thumb {
+              width: 28px; height: 28px; border-radius: 14px;
+              background: ${T.dark}; cursor: pointer;
+              border: 3px solid white;
+              box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            }
+          `}</style>
+          <div style={{display:"flex",justifyContent:"space-between",marginTop:10,fontSize:10,color:T.inkMute,fontWeight:600}}>
+            {[1,2,3,4,5,6,7].map(d=><span key={d} style={{color:d===obDays?T.primary:T.inkMute}}>{d}</span>)}
+          </div>
+        </div>
+        <div onClick={()=>setObStep(2)} style={{background:T.primary,color:"white",padding:"14px 0",borderRadius:16,fontWeight:700,fontSize:15,cursor:"pointer",textAlign:"center"}}>Continue</div>
+        <Skip/>
+      </div>,
+      <div key={2} style={{padding:"40px 24px"}}>
+        <Lbl>Step 2 of 3</Lbl>
+        <div style={{fontFamily:fd,fontSize:24,fontWeight:800,color:T.ink,marginBottom:8}}>What's your pace?</div>
+        <div style={{fontSize:13,color:T.inkMute,marginBottom:24}}>How much do you want to squeeze into a day?</div>
+        <div style={{display:"flex",flexDirection:"column",gap:10,marginBottom:32}}>
+          {PACES.map(p=><div key={p.id} onClick={()=>setObPace(p.id)} style={{borderRadius:18,padding:"16px 18px",cursor:"pointer",display:"flex",alignItems:"center",gap:14,background:obPace===p.id?T.dark:"white",color:obPace===p.id?"white":T.ink,boxShadow:obPace===p.id?"0 6px 20px rgba(11,18,32,0.2)":`0 0 0 1px ${T.line}`}}>
+            <div style={{fontSize:26}}>{p.icon}</div>
+            <div style={{flex:1}}>
+              <div style={{fontSize:15,fontWeight:700}}>{p.label}</div>
+              <div style={{fontSize:12,opacity:0.6,marginTop:2}}>{p.desc}</div>
+            </div>
+            {obPace===p.id&&<Check size={18} color={T.gold}/>}
+          </div>)}
+        </div>
+        <div onClick={()=>obPace&&setObStep(3)} style={{background:obPace?T.primary:T.line,color:obPace?"white":T.inkMute,padding:"14px 0",borderRadius:16,fontWeight:700,fontSize:15,cursor:obPace?"pointer":"default",textAlign:"center"}}>Continue</div>
+        <Skip/>
+      </div>,
+      <div key={3} style={{padding:"40px 24px"}}>
+        <Lbl>Step 3 of 3</Lbl>
+        <div style={{fontFamily:fd,fontSize:24,fontWeight:800,color:T.ink,marginBottom:8}}>What excites you?</div>
+        <div style={{fontSize:13,color:T.inkMute,marginBottom:24}}>Pick one or more — we'll mix them into your plan.</div>
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:32}}>
+          {INTERESTS.map(i=>{const on=obInterests.includes(i.id);return<div key={i.id} onClick={()=>setObInterests(on?obInterests.filter(x=>x!==i.id):[...obInterests,i.id])} style={{borderRadius:18,padding:"16px 14px",cursor:"pointer",background:on?T.dark:"white",color:on?"white":T.ink,boxShadow:on?"0 6px 20px rgba(11,18,32,0.2)":`0 0 0 1px ${T.line}`,position:"relative"}}>
+            <div style={{fontSize:24,marginBottom:6}}>{i.icon}</div>
+            <div style={{fontSize:12,fontWeight:700,lineHeight:1.3}}>{i.label}</div>
+            {on&&<div style={{position:"absolute",top:10,right:10,width:18,height:18,borderRadius:9,background:T.gold,display:"flex",alignItems:"center",justifyContent:"center"}}><Check size={11} color={T.dark}/></div>}
+          </div>})}
+        </div>
+        <div onClick={()=>{
+          // Plan'ı hemen oluştur
+          const result = generatePlan({days:obDays,pace:obPace||"balanced",interests:obInterests});
+          setPlanDays(obDays);
+          setPlanPace(obPace||"balanced");
+          setPlanInterests(obInterests);
+          setPlanResult(result);
+          setPlanStep(4);
+          setActiveDay(1);
+          setBoarded(true);
+          setTab("plan");
+        }} style={{background:T.dark,color:"white",padding:"16px 0",borderRadius:16,fontWeight:700,fontSize:15,cursor:"pointer",textAlign:"center",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
+          <Sparkles size={16}/>Build my trip
+        </div>
+        <Skip/>
+      </div>,
     ];
-    return(<div style={{minHeight:"100vh",background:"radial-gradient(circle at top,#eaf2ff 0%,#f5f7fb 35%)",padding:16,fontFamily:fi}}><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet"/><div style={{maxWidth:440,margin:"0 auto",borderRadius:34,border:"1px solid rgba(255,255,255,0.7)",background:"white",boxShadow:T.sh.hero,overflow:"hidden"}}>{obStep>0&&<div style={{padding:"16px 24px 0",display:"flex",gap:6}}>{[1,2,3].map(s=><div key={s} style={{flex:1,height:3,borderRadius:2,background:s<=obStep?T.primary:T.line}}/>)}</div>}{steps[obStep]}</div></div>);
+    return(<div style={{minHeight:"100vh",background:"radial-gradient(circle at top,#eaf2ff 0%,#f5f7fb 35%)",padding:16,fontFamily:fi}}><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet"/><div style={{maxWidth:440,margin:"0 auto",borderRadius:34,border:"1px solid rgba(255,255,255,0.7)",background:"white",boxShadow:T.sh.hero,overflow:"hidden",display:"flex",flexDirection:"column",height:"calc(100vh - 32px)"}}>{obStep>0&&<div style={{padding:"16px 24px 0",display:"flex",gap:6,flexShrink:0}}>{[1,2,3].map(s=><div key={s} style={{flex:1,height:3,borderRadius:2,background:s<=obStep?T.primary:T.line}}/>)}</div>}<div style={{flex:1,overflowY:"auto",display:"flex",flexDirection:"column",justifyContent:"center"}}>{steps[obStep]}</div></div></div>);
   }
 
   // ═══ MAIN ═══
@@ -196,20 +300,158 @@ export default function IstanbulGo(){
 
         {/* HEADER */}
         <div style={{position:"relative",overflow:"hidden",background:`linear-gradient(180deg,${T.dark} 0%,#16233B 58%,#1A2B45 100%)`,padding:"32px 20px 20px",color:"white"}}>
-          <div style={{position:"absolute",inset:0,opacity:0.06,backgroundImage:"radial-gradient(circle at 1px 1px,white 0.5px,transparent 0)",backgroundSize:"20px 20px"}}/>
+          <div style={{position:"absolute",inset:0,opacity:0.06,backgroundImage:"radial-gradient(circle at 1px 1px,white 0.5px,transparent 0)",backgroundSize:"20px 20px",pointerEvents:"none"}}/>
           <div style={{position:"relative",display:"flex",justifyContent:"space-between",alignItems:"center"}}><div><div style={{display:"flex",alignItems:"center",gap:8}}><span style={{fontSize:24,fontWeight:800,letterSpacing:"-0.04em",fontFamily:fd}}>Istanbul</span><span style={{background:"rgba(255,255,255,0.1)",padding:"4px 8px",borderRadius:99,fontSize:11,fontWeight:700,letterSpacing:"0.14em",color:"#BFDBFE"}}>GO</span></div><div style={{marginTop:4,fontSize:11,textTransform:"uppercase",letterSpacing:"0.14em",color:"rgba(255,255,255,0.35)"}}>tourist super app</div></div><div style={{display:"flex",gap:8}}>{favs.size>0&&<div onClick={()=>goTab("trip")} style={{position:"relative",width:40,height:40,borderRadius:16,border:"1px solid rgba(255,255,255,0.1)",background:"rgba(255,255,255,0.05)",display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer"}}><Heart size={17} color="#FCA5A5" fill="#FCA5A5"/><div style={{position:"absolute",top:-2,right:-2,width:16,height:16,borderRadius:8,background:T.danger,fontSize:9,fontWeight:800,color:"white",display:"flex",alignItems:"center",justifyContent:"center"}}>{favs.size}</div></div>}<div onClick={()=>setLangOpen(true)} style={{width:40,height:40,borderRadius:16,border:"1px solid rgba(255,255,255,0.1)",background:"rgba(255,255,255,0.05)",display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",fontSize:16}}>{LANGUAGES.find(l=>l.code===lang)?.flag||"🌐"}</div><div onClick={()=>setAccountOpen(true)} style={{width:40,height:40,borderRadius:16,border:"1px solid rgba(255,255,255,0.1)",background:user?"rgba(29,78,216,0.3)":"rgba(255,255,255,0.05)",display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer"}}><User size={17} color={user?"#93C5FD":"rgba(255,255,255,0.6)"}/></div></div></div>
-          <div style={{marginTop:18,display:"flex",alignItems:"center",gap:10,background:"white",padding:"12px 16px",borderRadius:16}}><Search size={17} color={T.inkMute}/><input placeholder="Find tickets, routes, eSIM, tips..." style={{flex:1,border:"none",outline:"none",background:"transparent",fontSize:14,color:T.ink,fontFamily:fi}}/><div style={{display:"flex",alignItems:"center",gap:6,background:T.primary,padding:"8px 12px",borderRadius:12,fontSize:12,fontWeight:700,color:"white",cursor:"pointer"}}><Sparkles size={13}/>Ask</div></div>
+          {/* Search bar - inline input */}
+          <div style={{position:"relative",zIndex:5,marginTop:18}}>
+            <div style={{display:"flex",alignItems:"center",gap:10,background:"white",padding:"14px 16px",borderRadius:16}}>
+              <Search size={17} color={T.inkMute}/>
+              <input
+                value={searchQuery}
+                onChange={(e)=>setSearchQuery(e.target.value)}
+                onFocus={()=>setSearchFocused(true)}
+                placeholder="Find tickets, routes, eSIM, tips..."
+                style={{flex:1,border:"none",outline:"none",background:"transparent",fontSize:14,color:T.ink,fontFamily:fi}}
+              />
+              {(searchQuery||searchFocused)&&<div onClick={()=>{setSearchQuery("");setSearchFocused(false);document.activeElement?.blur()}} style={{width:22,height:22,borderRadius:11,background:"#F1F5F9",display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer"}}><X size={12} color={T.inkSoft}/></div>}
+            </div>
+          </div>
         </div>
 
         {/* CONTENT */}
-        <div style={{flex:1,overflowY:"auto",background:`linear-gradient(180deg,#F8FBFF 0%,${T.bg} 24%)`,padding:"20px 20px 110px"}}>
+        <div style={{flex:1,overflowY:"auto",background:`linear-gradient(180deg,#F8FBFF 0%,${T.bg} 24%)`,padding:"20px 20px 110px",position:"relative"}}>
+
+          {/* Search results overlay */}
+          {searchFocused&&(()=>{
+            const ql=searchQuery.toLowerCase().trim();
+            const hasQ=ql.length>=1;
+            const matchedAtt=hasQ?ATT.filter(a=>[a.title,a.cat,a.area,a.hook,a.teaser,a.badge].join(" ").toLowerCase().includes(ql)).slice(0,6):[];
+            const matchedGuide=hasQ?GUIDES.filter(g=>[g.title,g.sub].join(" ").toLowerCase().includes(ql)).slice(0,3):[];
+            const quickActions=[
+              {id:"plan",label:"Plan my trip",desc:"Build a smart itinerary",kw:["plan","itinerary","trip","day","route"]},
+              {id:"transport",label:"Public Transport",desc:"Metro, tram, ferry, cards",kw:["transport","metro","tram","ferry","bus","istanbulkart","card"]},
+              {id:"esim",label:"eSIM & Data",desc:"Stay connected in Turkey",kw:["esim","data","internet","wifi","sim"]},
+              {id:"book",label:"Tickets & Tours",desc:"Browse all bookings",kw:["ticket","book","tour"]},
+              {id:"trip",label:"My saved places",desc:"Your trip wallet",kw:["saved","favorites","wallet","my"]},
+            ];
+            const matchedQA=hasQ?quickActions.filter(qa=>[qa.label,qa.desc,...qa.kw].join(" ").toLowerCase().includes(ql)).slice(0,3):[];
+            const noResults=hasQ&&matchedAtt.length===0&&matchedGuide.length===0&&matchedQA.length===0;
+            const popular=["Hagia Sophia","Food tour","Transport","Hidden gems","eSIM"];
+
+            return(
+              <>
+                <div onMouseDown={()=>{setSearchFocused(false);setSearchQuery("")}} style={{position:"absolute",inset:0,background:"rgba(255,255,255,0.6)",backdropFilter:"blur(2px)",zIndex:10}}/>
+                <div style={{position:"absolute",top:12,left:20,right:20,background:"white",borderRadius:20,boxShadow:"0 12px 40px rgba(15,23,42,0.2)",border:`1px solid ${T.line}`,maxHeight:"calc(100% - 24px)",overflowY:"auto",color:T.ink,padding:"12px 0",zIndex:11}}>
+
+                  {/* Empty state */}
+                  {!hasQ&&<div style={{padding:"8px 16px 14px"}}>
+                    <div style={{fontSize:10,fontWeight:700,color:T.inkMute,textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:10}}>✨ Popular searches</div>
+                    <div style={{display:"flex",flexWrap:"wrap",gap:6}}>
+                      {popular.map(p=><div key={p} onMouseDown={(e)=>{e.preventDefault();e.stopPropagation();setSearchQuery(p)}} style={{padding:"8px 14px",borderRadius:99,background:"#F1F5F9",fontSize:12,fontWeight:600,color:T.inkSoft,cursor:"pointer"}}>{p}</div>)}
+                    </div>
+                    <div style={{fontSize:11,color:T.inkMute,marginTop:14,lineHeight:1.6}}>Try: Hagia Sophia, food tour, transport, hidden gems, eSIM...</div>
+                  </div>}
+
+                  {/* No results */}
+                  {noResults&&<div style={{padding:"24px 14px",textAlign:"center"}}>
+                    <Search size={28} color={T.line} style={{margin:"0 auto 10px"}}/>
+                    <div style={{fontSize:13,fontWeight:700,marginBottom:4}}>No results for "{searchQuery}"</div>
+                    <div style={{fontSize:11,color:T.inkMute}}>Try different keywords</div>
+                  </div>}
+
+                  {/* Places */}
+                  {matchedAtt.length>0&&<div>
+                    <div style={{padding:"4px 16px 6px",fontSize:10,fontWeight:700,color:T.inkMute,textTransform:"uppercase",letterSpacing:"0.08em"}}>🏛️ Places · {matchedAtt.length}</div>
+                    {matchedAtt.map(a=><div key={a.id} onMouseDown={(e)=>{e.preventDefault();e.stopPropagation();setPreviewAtt(a);setSearchQuery("");setSearchFocused(false);document.activeElement?.blur()}} style={{display:"flex",alignItems:"center",gap:10,padding:"10px 16px",cursor:"pointer",borderBottom:`1px solid ${T.line}`}}>
+                      <img src={a.img} alt={a.title} style={{width:40,height:40,borderRadius:10,objectFit:"cover",flexShrink:0}}/>
+                      <div style={{flex:1,minWidth:0}}>
+                        <div style={{fontSize:13,fontWeight:700}}>{a.title}</div>
+                        <div style={{fontSize:10,color:T.inkMute,marginTop:1}}>{a.cat} · {a.area} {a.price>0?`· €${a.price}`:"· Free"}</div>
+                      </div>
+                      <ChevronRight size={14} color={T.inkMute}/>
+                    </div>)}
+                  </div>}
+
+                  {/* Guides */}
+                  {matchedGuide.length>0&&<div>
+                    <div style={{padding:"8px 16px 6px",fontSize:10,fontWeight:700,color:T.inkMute,textTransform:"uppercase",letterSpacing:"0.08em"}}>📖 Guides · {matchedGuide.length}</div>
+                    {matchedGuide.map(g=><div key={g.id} onMouseDown={(e)=>{e.preventDefault();e.stopPropagation();goTab("explore");setGuideId(g.id);setSearchQuery("");setSearchFocused(false);document.activeElement?.blur()}} style={{display:"flex",alignItems:"center",gap:10,padding:"10px 16px",cursor:"pointer",borderBottom:`1px solid ${T.line}`}}>
+                      <div style={{width:36,height:36,borderRadius:10,background:"#F1F5F9",display:"flex",alignItems:"center",justifyContent:"center",fontSize:18,flexShrink:0}}>{g.emoji}</div>
+                      <div style={{flex:1,minWidth:0}}>
+                        <div style={{fontSize:13,fontWeight:700}}>{g.title}</div>
+                        <div style={{fontSize:10,color:T.inkMute,marginTop:1}}>{g.sub}</div>
+                      </div>
+                      <ChevronRight size={14} color={T.inkMute}/>
+                    </div>)}
+                  </div>}
+
+                  {/* Quick actions */}
+                  {matchedQA.length>0&&<div>
+                    <div style={{padding:"8px 16px 6px",fontSize:10,fontWeight:700,color:T.inkMute,textTransform:"uppercase",letterSpacing:"0.08em"}}>🧭 Quick access · {matchedQA.length}</div>
+                    {matchedQA.map(qa=><div key={qa.id} onMouseDown={(e)=>{e.preventDefault();e.stopPropagation();if(qa.id==="transport")setTransOpen(true);else if(qa.id==="esim")setEsimOpen(true);else goTab(qa.id);setSearchQuery("");setSearchFocused(false);document.activeElement?.blur()}} style={{display:"flex",alignItems:"center",gap:10,padding:"10px 16px",cursor:"pointer"}}>
+                      <div style={{width:36,height:36,borderRadius:10,background:T.primarySoft,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}><Compass size={16} color={T.primary}/></div>
+                      <div style={{flex:1,minWidth:0}}>
+                        <div style={{fontSize:13,fontWeight:700}}>{qa.label}</div>
+                        <div style={{fontSize:10,color:T.inkMute,marginTop:1}}>{qa.desc}</div>
+                      </div>
+                      <ChevronRight size={14} color={T.inkMute}/>
+                    </div>)}
+                  </div>}
+                </div>
+              </>
+            );
+          })()}
 
           {/* ── HOME ── */}
           {tab==="home"&&!infoPage&&<>
-            {planStep===4&&<div onClick={()=>goTab("plan")} style={{overflow:"hidden",borderRadius:24,marginBottom:24,cursor:"pointer",position:"relative",background:`linear-gradient(135deg,${T.dark},#16233B)`,padding:20,color:"white"}}><div style={{position:"absolute",inset:0,opacity:0.06,backgroundImage:"radial-gradient(circle at 1px 1px,white 0.5px,transparent 0)",backgroundSize:"18px 18px"}}/><div style={{position:"relative",display:"flex",alignItems:"center",gap:14}}><div style={{width:52,height:52,borderRadius:18,background:"rgba(29,78,216,0.3)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}><Sparkles size={22} color={T.gold} strokeWidth={1.5}/></div><div style={{flex:1}}><div style={{fontSize:10,fontWeight:600,textTransform:"uppercase",letterSpacing:"0.12em",color:T.gold,marginBottom:4}}>Ready for you</div><div style={{fontSize:16,fontWeight:700}}>Your {planDays}-day itinerary</div></div><ChevronRight size={20} color="rgba(255,255,255,0.3)"/></div></div>}
+            {planResult&&<div onClick={()=>{goTab("plan");setPlanStep(4)}} style={{overflow:"hidden",borderRadius:24,marginBottom:24,cursor:"pointer",position:"relative",background:`linear-gradient(135deg,${T.dark},#16233B)`,padding:20,color:"white"}}><div style={{position:"absolute",inset:0,opacity:0.06,backgroundImage:"radial-gradient(circle at 1px 1px,white 0.5px,transparent 0)",backgroundSize:"18px 18px"}}/><div style={{position:"relative",display:"flex",alignItems:"center",gap:14}}><div style={{width:52,height:52,borderRadius:18,background:"rgba(29,78,216,0.3)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}><Sparkles size={22} color={T.gold} strokeWidth={1.5}/></div><div style={{flex:1}}><div style={{fontSize:10,fontWeight:600,textTransform:"uppercase",letterSpacing:"0.12em",color:T.gold,marginBottom:4}}>Ready for you</div><div style={{fontSize:16,fontWeight:700}}>Your {planDays}-day itinerary</div></div><ChevronRight size={20} color="rgba(255,255,255,0.3)"/></div></div>}
 
             {/* Quick Actions */}
-            <div style={{marginBottom:28}}><Lbl>Quick access</Lbl><Hd>Everything you need</Hd><div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:12}}>{[{Icon:Sparkles,l:"Smart Plan",tone:T.primarySoft,ic:T.primary,tap:()=>goTab("plan")},{Icon:Ticket,l:"Tickets",tone:"#FCE7F3",ic:"#BE185D",tap:()=>goTab("book")},{Icon:Train,l:"Transport",tone:T.okSoft,ic:T.ok,tap:()=>setTransOpen(true)},{Icon:Navigation,l:"Explore",tone:T.warnSoft,ic:T.warn,tap:()=>goTab("explore")},{Icon:Smartphone,l:"eSIM",tone:"#EDE9FE",ic:"#6D28D9",tap:()=>setEsimOpen(true)},{Icon:Package,l:"My Trip",tone:T.goldSoft,ic:T.gold,tap:()=>goTab("trip")}].map(q=><div key={q.l} onClick={q.tap} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:8,borderRadius:22,background:"white",padding:"16px 8px",border:`1px solid ${T.line}`,cursor:"pointer"}}><div style={{width:48,height:48,borderRadius:16,background:q.tone,display:"flex",alignItems:"center",justifyContent:"center"}}><q.Icon size={21} color={q.ic} strokeWidth={1.75}/></div><span style={{fontSize:11,fontWeight:600,color:T.inkSoft}}>{q.l}</span></div>)}</div></div>
+            {/* Quick access — visual hero + grid */}
+            <div style={{marginBottom:28}}>
+              <Lbl>Quick access</Lbl>
+              <Hd>Everything you need</Hd>
+
+              {/* HERO — Smart Plan */}
+              <div onClick={()=>goTab("plan")} style={{position:"relative",borderRadius:28,overflow:"hidden",cursor:"pointer",marginBottom:14,height:220}}>
+                <img src="/qa-hero-plan.jpg" alt="Smart Plan" style={{width:"100%",height:"100%",objectFit:"cover",display:"block"}}/>
+                <div style={{position:"absolute",inset:0,background:"linear-gradient(to top, rgba(11,18,32,0.75) 0%, rgba(11,18,32,0.2) 50%, transparent 100%)"}}/>
+                {/* Badge */}
+                <div style={{position:"absolute",top:14,left:14,background:"rgba(255,255,255,0.92)",backdropFilter:"blur(10px)",padding:"5px 12px",borderRadius:99,fontSize:11,fontWeight:700,color:T.dark}}>New</div>
+                {/* Content */}
+                <div style={{position:"absolute",bottom:0,left:0,right:0,padding:18}}>
+                  <div style={{fontSize:24,fontWeight:800,color:"white",fontFamily:fd,letterSpacing:"-0.03em"}}>Smart Plan</div>
+                  <div style={{fontSize:12,color:"rgba(255,255,255,0.85)",marginTop:4,lineHeight:1.4}}>Build your Istanbul route in minutes</div>
+                  <div style={{display:"inline-flex",alignItems:"center",gap:6,marginTop:12,padding:"8px 14px",borderRadius:99,background:"white",fontSize:12,fontWeight:700,color:T.dark}}>
+                    <Sparkles size={12}/>Start planning →
+                  </div>
+                </div>
+              </div>
+
+              {/* GRID — 6 cards 3×2 */}
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:10}}>
+                {[
+                  {title:"Tickets",sub:"Top sights, skip-the-line",img:"/qa-tickets.jpg",badge:"Popular",tap:()=>goTab("book")},
+                  {title:"Transport",sub:"Metro, tram, ferry",img:"/qa-transport.jpg",badge:"Essential",tap:()=>setTransOpen(true)},
+                  {title:"eSIM",sub:"Online as you land",img:"/qa-esim.jpg",badge:"Travel hack",tap:()=>setEsimOpen(true)},
+                  {title:"Guides",sub:"Hidden gems, local spots",img:"/qa-guides.jpg",badge:"Editor's pick",tap:()=>goTab("explore")},
+                  {title:"Airport",sub:"Transfers & arrival tips",img:"/qa-airport.jpg",badge:"Arrival",tap:()=>setInfoPage("airport")},
+                  {title:"Weather",sub:"Forecast & what to wear",img:"/qa-weather.jpg",badge:"Live",tap:()=>setInfoPage("live")},
+                ].map(c=>(
+                  <div key={c.title} onClick={c.tap} style={{position:"relative",aspectRatio:"1",borderRadius:20,overflow:"hidden",cursor:"pointer"}}>
+                    <img src={c.img} alt={c.title} style={{width:"100%",height:"100%",objectFit:"cover",display:"block"}}/>
+                    <div style={{position:"absolute",inset:0,background:"linear-gradient(to top, rgba(11,18,32,0.82) 0%, rgba(11,18,32,0.15) 55%, transparent 100%)"}}/>
+                    {/* Badge */}
+                    <div style={{position:"absolute",top:8,left:8,background:"rgba(255,255,255,0.9)",backdropFilter:"blur(8px)",padding:"3px 8px",borderRadius:99,fontSize:9,fontWeight:700,color:T.dark}}>{c.badge}</div>
+                    {/* Content */}
+                    <div style={{position:"absolute",bottom:0,left:0,right:0,padding:"10px 12px"}}>
+                      <div style={{fontSize:13,fontWeight:800,color:"white",fontFamily:fd,letterSpacing:"-0.02em",lineHeight:1.2}}>{c.title}</div>
+                      <div style={{fontSize:9,color:"rgba(255,255,255,0.78)",marginTop:2,lineHeight:1.3}}>{c.sub}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
 
             {/* ── Daily Briefing — premium teaser, subtle ── */}
             {!isPremium && (
@@ -250,7 +492,7 @@ export default function IstanbulGo(){
             <div style={{marginBottom:28}}>
               <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-end",marginBottom:16}}><div><Lbl>Beyond the obvious</Lbl><div style={{fontSize:22,fontWeight:800,letterSpacing:"-0.03em",fontFamily:fd}}>Hidden Gems</div></div><span onClick={()=>{goTab("explore");setGuideId("hidden-gems")}} style={{fontSize:12,fontWeight:600,color:T.primary,cursor:"pointer"}}>Open guide →</span></div>
               <div style={{display:"flex",gap:12,overflowX:"auto",paddingBottom:8,marginRight:-20}}>
-                {["dervish","cooking","foodtour","hammam","nightcruise"].map(id=>ATT.find(a=>a.id===id)).filter(Boolean).map(a=><div key={a.id} style={{minWidth:220,overflow:"hidden",borderRadius:22,border:`1px solid ${T.line}`,background:"white",flexShrink:0}}>
+                {["dervish","balat","pierreloti","camlica","cooking","ortakoy"].map(id=>ATT.find(a=>a.id===id)).filter(Boolean).map(a=><div key={a.id} style={{minWidth:220,overflow:"hidden",borderRadius:22,border:`1px solid ${T.line}`,background:"white",flexShrink:0}}>
                   <div onClick={()=>setPreviewAtt(a)} style={{position:"relative",height:140,overflow:"hidden",cursor:"pointer"}}>
                     <img src={a.img} alt={a.title} style={{width:"100%",height:"100%",objectFit:"cover"}}/>
                     <div style={{position:"absolute",inset:0,background:"linear-gradient(to top,rgba(15,23,42,0.55),transparent 50%)"}}/>
@@ -286,23 +528,113 @@ export default function IstanbulGo(){
 
           {/* ── PLAN ── */}
           {tab==="plan"&&<div>
-            {planStep===0&&<div><div style={{overflow:"hidden",borderRadius:28,background:`linear-gradient(135deg,${T.dark},#16233B)`,padding:"40px 24px",color:"white",textAlign:"center",marginBottom:20}}><Sparkles size={40} color={T.gold} strokeWidth={1.2} style={{margin:"0 auto 16px"}}/><div style={{fontFamily:fd,fontSize:26,fontWeight:800,marginBottom:8}}>Plan Your Perfect Trip</div><div style={{fontSize:14,color:"rgba(255,255,255,0.6)",lineHeight:1.6}}>Answer 3 quick questions for a personalized itinerary.</div></div><div onClick={()=>setPlanStep(1)} style={{background:T.primary,color:"white",padding:"16px 0",borderRadius:16,fontWeight:700,fontSize:15,cursor:"pointer",textAlign:"center",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}><Sparkles size={16}/>Start Planning</div></div>}
-            {planStep===1&&<div><div onClick={()=>setPlanStep(0)} style={{display:"flex",alignItems:"center",gap:6,fontSize:13,color:T.inkMute,cursor:"pointer",marginBottom:16}}><ArrowLeft size={14}/>Back</div><Lbl>Step 1 of 3</Lbl><div style={{fontFamily:fd,fontSize:24,fontWeight:800,marginBottom:24}}>How many days?</div><div style={{display:"flex",gap:10,flexWrap:"wrap",marginBottom:32}}>{[1,2,3,4,5,7].map(d=><div key={d} onClick={()=>setPlanDays(d)} style={{width:56,height:56,borderRadius:18,display:"flex",alignItems:"center",justifyContent:"center",fontSize:18,fontWeight:700,cursor:"pointer",background:planDays===d?T.dark:"white",color:planDays===d?T.gold:T.ink,boxShadow:planDays===d?"0 6px 20px rgba(11,18,32,0.2)":`0 0 0 1px ${T.line}`}}>{d}</div>)}</div><div onClick={()=>setPlanStep(2)} style={{background:T.primary,color:"white",padding:"14px 0",borderRadius:16,fontWeight:700,textAlign:"center",cursor:"pointer"}}>Continue</div></div>}
-            {planStep===2&&<div><div onClick={()=>setPlanStep(1)} style={{display:"flex",alignItems:"center",gap:6,fontSize:13,color:T.inkMute,cursor:"pointer",marginBottom:16}}><ArrowLeft size={14}/>Back</div><Lbl>Step 2 of 3</Lbl><div style={{fontFamily:fd,fontSize:24,fontWeight:800,marginBottom:24}}>What to see?</div><div style={{display:"flex",flexWrap:"wrap",gap:8,marginBottom:32}}>{ATT.map(a=>{const on=planSel.has(a.id);return<div key={a.id} onClick={()=>toggleSel(a.id)} style={{padding:"10px 16px",borderRadius:24,fontSize:13,fontWeight:500,cursor:"pointer",display:"flex",alignItems:"center",gap:6,background:on?T.dark:"white",color:on?"white":T.ink,boxShadow:on?"0 4px 14px rgba(11,18,32,0.2)":`0 0 0 1px ${T.line}`}}>{a.title}{on&&<Check size={12}/>}</div>})}</div><div onClick={()=>planSel.size>0&&setPlanStep(3)} style={{background:planSel.size>0?T.primary:T.line,color:planSel.size>0?"white":T.inkMute,padding:"14px 0",borderRadius:16,fontWeight:700,textAlign:"center",cursor:planSel.size>0?"pointer":"default"}}>Continue</div></div>}
-            {planStep===3&&<div><div onClick={()=>setPlanStep(2)} style={{display:"flex",alignItems:"center",gap:6,fontSize:13,color:T.inkMute,cursor:"pointer",marginBottom:16}}><ArrowLeft size={14}/>Back</div><Lbl>Step 3 of 3</Lbl><div style={{fontFamily:fd,fontSize:24,fontWeight:800,marginBottom:24}}>Your pace?</div><div style={{display:"flex",flexDirection:"column",gap:10,marginBottom:32}}>{[{id:"relaxed",l:"Relaxed",d:"2-3 stops/day",e:"🧘"},{id:"balanced",l:"Balanced",d:"4-5 stops",e:"⚖️"},{id:"packed",l:"Packed",d:"6+ stops",e:"🚀"}].map(p=><div key={p.id} onClick={()=>setPlanTempo(p.id)} style={{borderRadius:18,padding:"16px 18px",cursor:"pointer",display:"flex",alignItems:"center",gap:14,background:planTempo===p.id?T.dark:"white",color:planTempo===p.id?"white":T.ink,boxShadow:planTempo===p.id?"0 6px 20px rgba(11,18,32,0.2)":`0 0 0 1px ${T.line}`}}><div style={{fontSize:24}}>{p.e}</div><div><div style={{fontSize:15,fontWeight:600}}>{p.l}</div><div style={{fontSize:12,opacity:0.6,marginTop:2}}>{p.d}</div></div></div>)}</div><div onClick={()=>setPlanStep(4)} style={{background:T.dark,color:"white",padding:"16px 0",borderRadius:16,fontWeight:700,textAlign:"center",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}><Sparkles size={16}/>Generate Itinerary</div></div>}
-            {planStep===4&&<><div onClick={()=>setPlanStep(0)} style={{display:"flex",alignItems:"center",gap:6,fontSize:13,color:T.inkMute,cursor:"pointer",marginBottom:16}}><ArrowLeft size={14}/>Start over</div><div style={{display:"flex",gap:8,overflowX:"auto",marginBottom:20}}>{PLAN_DAYS.slice(0,planDays).map(d=><div key={d.day} onClick={()=>setActiveDay(d.day)} style={{minWidth:112,borderRadius:20,padding:"12px 16px",cursor:"pointer",background:activeDay===d.day?T.dark:"white",color:activeDay===d.day?"white":T.ink,border:activeDay===d.day?"none":`1px solid ${T.line}`}}><div style={{fontSize:13,fontWeight:700}}>Day {d.day}</div><div style={{fontSize:11,opacity:0.7,marginTop:4}}>{d.title}</div></div>)}</div>{activePlan&&<div style={{borderRadius:28,border:`1px solid ${T.line}`,background:"white",padding:16}}><div style={{fontSize:20,fontWeight:800,fontFamily:fd,marginBottom:16}}>{activePlan.title}</div>{activePlan.items.map((s,i)=><div key={i} style={{display:"flex",gap:12}}><div style={{width:52,paddingTop:12,textAlign:"right",fontSize:12,fontWeight:600,color:T.inkMute}}>{s.t}</div><div style={{display:"flex",flexDirection:"column",alignItems:"center",width:16}}><div style={{width:12,height:12,borderRadius:6,marginTop:16,background:dotC[s.tp]||T.inkMute}}/>{i<activePlan.items.length-1&&<div style={{width:1,flex:1,background:T.line,marginTop:8}}/>}</div><div onClick={()=>{if(s.id){const att=ATT.find(a=>a.id===s.id);if(att)setPreviewAtt(att)}}} style={{flex:1,marginBottom:12,borderRadius:20,border:`1px solid ${T.line}`,background:"#F8FAFC",padding:16,cursor:s.id?"pointer":"default"}}><div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}><div style={{fontSize:14,fontWeight:700}}>{s.n}</div>{s.id&&<span style={{fontSize:11,fontWeight:600,color:T.primary}}>details →</span>}</div><div style={{fontSize:12,color:T.inkMute,marginTop:4}}>{s.m}</div></div></div>)}<div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginTop:16}}><div onClick={()=>setPlanStep(0)} style={{display:"flex",alignItems:"center",justifyContent:"center",gap:6,borderRadius:18,border:`1px solid ${T.line}`,padding:"12px",fontSize:13,fontWeight:700,color:T.inkSoft,cursor:"pointer"}}><RotateCcw size={14}/>Rebuild</div><div onClick={()=>goTab("book")} style={{display:"flex",alignItems:"center",justifyContent:"center",gap:6,borderRadius:18,background:T.dark,padding:"12px",fontSize:13,fontWeight:700,color:"white",cursor:"pointer"}}><Ticket size={14}/>Book tickets</div></div></div>}
-            {/* ── AI Premium Plan Upsell ── */}
-            {!isPremium&&<div onClick={()=>setPremiumOpen(true)} style={{borderRadius:22,background:"linear-gradient(135deg,#0B1220,#1D4ED8)",padding:18,marginTop:16,cursor:"pointer",color:"white",position:"relative",overflow:"hidden"}}>
-              <div style={{position:"absolute",inset:0,opacity:0.08,backgroundImage:"radial-gradient(circle at 1px 1px,white 0.5px,transparent 0)",backgroundSize:"14px 14px"}}/>
-              <div style={{position:"relative",display:"flex",alignItems:"center",gap:14}}>
-                <div style={{width:48,height:48,borderRadius:16,background:"rgba(197,157,95,0.2)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}><Sparkles size={22} color={T.gold}/></div>
-                <div style={{flex:1}}>
-                  <div style={{fontSize:15,fontWeight:700}}>Want a personalized plan?</div>
-                  <div style={{fontSize:12,color:"rgba(255,255,255,0.55)",marginTop:3}}>AI builds a custom itinerary based on your interests, pace & hotel location</div>
+            {/* STEP 0: Intro */}
+            {planStep===0&&<div>
+              <div style={{overflow:"hidden",borderRadius:28,background:`linear-gradient(135deg,${T.dark},#16233B)`,padding:"40px 24px",color:"white",textAlign:"center",marginBottom:20}}>
+                <Sparkles size={40} color={T.gold} strokeWidth={1.2} style={{margin:"0 auto 16px"}}/>
+                <div style={{fontFamily:fd,fontSize:26,fontWeight:800,marginBottom:8}}>Plan the trip, not the chaos</div>
+                <div style={{fontSize:14,color:"rgba(255,255,255,0.6)",lineHeight:1.6}}>Answer 3 quick questions and get a smarter itinerary tailored to your style.</div>
+              </div>
+              <div onClick={()=>{setPlanStep(1);setPlanDays(null);setPlanPace(null);setPlanInterests([]);setPlanResult(null)}} style={{background:T.primary,color:"white",padding:"16px 0",borderRadius:16,fontWeight:700,fontSize:15,cursor:"pointer",textAlign:"center",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
+                <Sparkles size={16}/>Start Planning
+              </div>
+              {/* Free teaser */}
+              <div style={{marginTop:24,padding:16,borderRadius:18,background:"#F8FAFC",border:`1px solid ${T.line}`}}>
+                <div style={{fontSize:12,fontWeight:700,color:T.inkMute,textTransform:"uppercase",letterSpacing:"0.06em",marginBottom:8}}>What you get</div>
+                {["A day-by-day itinerary","Balanced route through the city","Tickets & booking links","Map-ready for navigation"].map((f,i)=><div key={i} style={{display:"flex",gap:8,fontSize:13,color:T.inkSoft,padding:"3px 0"}}><Check size={14} color={T.ok}/>{f}</div>)}
+              </div>
+            </div>}
+
+            {/* STEP 1: Days */}
+            {planStep===1&&<div>
+              <div onClick={()=>setPlanStep(0)} style={{display:"flex",alignItems:"center",gap:6,fontSize:13,color:T.inkMute,cursor:"pointer",marginBottom:16}}><ArrowLeft size={14}/>Back</div>
+              <Lbl>Step 1 of 3</Lbl>
+              <div style={{fontFamily:fd,fontSize:24,fontWeight:800,marginBottom:8}}>How many days do you have?</div>
+              <div style={{fontSize:13,color:T.inkMute,marginBottom:24}}>Slide to choose — 1 to 7 days.</div>
+              {/* Big number */}
+              <div style={{textAlign:"center",marginBottom:20}}>
+                <div style={{fontSize:72,fontWeight:800,color:T.dark,fontFamily:fd,lineHeight:1,letterSpacing:"-0.04em"}}>{planDays||3}</div>
+                <div style={{fontSize:13,fontWeight:600,color:T.inkMute,marginTop:4}}>{(planDays||3)===1?"day":"days"} in Istanbul</div>
+              </div>
+              {/* Slider */}
+              <div style={{padding:"0 8px",marginBottom:32}}>
+                <input
+                  type="range"
+                  min="1"
+                  max="7"
+                  value={planDays||3}
+                  onChange={(e)=>setPlanDays(parseInt(e.target.value))}
+                  style={{width:"100%",height:8,borderRadius:4,background:`linear-gradient(to right, ${T.primary} 0%, ${T.primary} ${(((planDays||3)-1)/6)*100}%, ${T.line} ${(((planDays||3)-1)/6)*100}%, ${T.line} 100%)`,appearance:"none",WebkitAppearance:"none",outline:"none",cursor:"pointer"}}
+                />
+                <div style={{display:"flex",justifyContent:"space-between",marginTop:10,fontSize:10,color:T.inkMute,fontWeight:600}}>
+                  {[1,2,3,4,5,6,7].map(d=><span key={d} style={{color:d===(planDays||3)?T.primary:T.inkMute}}>{d}</span>)}
                 </div>
               </div>
-              <div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:6,marginTop:14,padding:"11px 0",borderRadius:14,background:"rgba(197,157,95,0.2)",fontSize:13,fontWeight:700,color:T.gold}}>🔒 Unlock AI Planner · €4.99</div>
+              <div onClick={()=>{if(!planDays)setPlanDays(3);setPlanStep(2)}} style={{background:T.primary,color:"white",padding:"14px 0",borderRadius:16,fontWeight:700,textAlign:"center",cursor:"pointer"}}>Continue</div>
             </div>}
+
+            {/* STEP 2: Pace */}
+            {planStep===2&&<div>
+              <div onClick={()=>setPlanStep(1)} style={{display:"flex",alignItems:"center",gap:6,fontSize:13,color:T.inkMute,cursor:"pointer",marginBottom:16}}><ArrowLeft size={14}/>Back</div>
+              <Lbl>Step 2 of 3</Lbl>
+              <div style={{fontFamily:fd,fontSize:24,fontWeight:800,marginBottom:8}}>What's your pace?</div>
+              <div style={{fontSize:13,color:T.inkMute,marginBottom:24}}>How much do you want to squeeze into a day?</div>
+              <div style={{display:"flex",flexDirection:"column",gap:10,marginBottom:32}}>
+                {PACES.map(p=><div key={p.id} onClick={()=>setPlanPace(p.id)} style={{borderRadius:18,padding:"16px 18px",cursor:"pointer",display:"flex",alignItems:"center",gap:14,background:planPace===p.id?T.dark:"white",color:planPace===p.id?"white":T.ink,boxShadow:planPace===p.id?"0 6px 20px rgba(11,18,32,0.2)":`0 0 0 1px ${T.line}`}}>
+                  <div style={{fontSize:26}}>{p.icon}</div>
+                  <div style={{flex:1}}>
+                    <div style={{fontSize:15,fontWeight:700}}>{p.label}</div>
+                    <div style={{fontSize:12,opacity:0.6,marginTop:2}}>{p.desc}</div>
+                  </div>
+                  {planPace===p.id&&<Check size={18} color={T.gold}/>}
+                </div>)}
+              </div>
+              <div onClick={()=>planPace&&setPlanStep(3)} style={{background:planPace?T.primary:T.line,color:planPace?"white":T.inkMute,padding:"14px 0",borderRadius:16,fontWeight:700,textAlign:"center",cursor:planPace?"pointer":"default"}}>Continue</div>
+            </div>}
+
+            {/* STEP 3: Interests (multi-select) */}
+            {planStep===3&&<div>
+              <div onClick={()=>setPlanStep(2)} style={{display:"flex",alignItems:"center",gap:6,fontSize:13,color:T.inkMute,cursor:"pointer",marginBottom:16}}><ArrowLeft size={14}/>Back</div>
+              <Lbl>Step 3 of 3</Lbl>
+              <div style={{fontFamily:fd,fontSize:24,fontWeight:800,marginBottom:8}}>What excites you?</div>
+              <div style={{fontSize:13,color:T.inkMute,marginBottom:24}}>Pick one or more — we'll mix them into your plan.</div>
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:32}}>
+                {INTERESTS.map(i=>{const on=planInterests.includes(i.id);return<div key={i.id} onClick={()=>setPlanInterests(on?planInterests.filter(x=>x!==i.id):[...planInterests,i.id])} style={{borderRadius:18,padding:"16px 14px",cursor:"pointer",background:on?T.dark:"white",color:on?"white":T.ink,boxShadow:on?"0 6px 20px rgba(11,18,32,0.2)":`0 0 0 1px ${T.line}`,position:"relative"}}>
+                  <div style={{fontSize:24,marginBottom:6}}>{i.icon}</div>
+                  <div style={{fontSize:12,fontWeight:700,lineHeight:1.3}}>{i.label}</div>
+                  {on&&<div style={{position:"absolute",top:10,right:10,width:18,height:18,borderRadius:9,background:T.gold,display:"flex",alignItems:"center",justifyContent:"center"}}><Check size={11} color={T.dark}/></div>}
+                </div>})}
+              </div>
+              <div onClick={()=>{const result=generatePlan({days:planDays,pace:planPace,interests:planInterests});setPlanResult(result);setPlanStep(4);setActiveDay(1)}} style={{background:T.dark,color:"white",padding:"16px 0",borderRadius:16,fontWeight:700,textAlign:"center",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
+                <Sparkles size={16}/>Build My Plan
+              </div>
+            </div>}
+
+            {/* STEP 4: Result */}
+            {planStep===4&&planResult&&<>
+              <ItineraryMap
+                planResult={planResult}
+                allAttractions={ATT}
+                activeDay={activeDay}
+                setActiveDay={setActiveDay}
+                onOpenAttraction={(att)=>setDetailAtt(att)}
+                onPreview={(att)=>setPreviewAtt(att)}
+                onBook={handleBook}
+                onRebuild={()=>setPlanStep(0)}
+                onBack={()=>setPlanStep(0)}
+              />
+              {/* Premium upsell */}
+              {!isPremium&&<div onClick={()=>setPremiumOpen(true)} style={{borderRadius:22,background:"linear-gradient(135deg,#0B1220,#1D4ED8)",padding:18,marginTop:16,cursor:"pointer",color:"white",position:"relative",overflow:"hidden"}}>
+                <div style={{position:"absolute",inset:0,opacity:0.08,backgroundImage:"radial-gradient(circle at 1px 1px,white 0.5px,transparent 0)",backgroundSize:"14px 14px"}}/>
+                <div style={{position:"relative",display:"flex",alignItems:"center",gap:14}}>
+                  <div style={{width:48,height:48,borderRadius:16,background:"rgba(197,157,95,0.2)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}><Sparkles size={22} color={T.gold}/></div>
+                  <div style={{flex:1}}>
+                    <div style={{fontSize:15,fontWeight:700}}>Want it hyper-personalized?</div>
+                    <div style={{fontSize:12,color:"rgba(255,255,255,0.55)",marginTop:3}}>Premium planner adds hotel-based routing, live crowds, and photo timing.</div>
+                  </div>
+                </div>
+                <div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:6,marginTop:14,padding:"11px 0",borderRadius:14,background:"rgba(197,157,95,0.2)",fontSize:13,fontWeight:700,color:T.gold}}>🔒 Unlock AI Planner · €4.99</div>
+              </div>}
             </>}
           </div>}
 
