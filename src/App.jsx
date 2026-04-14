@@ -18,6 +18,7 @@ import TransportSheet from './TransportSheet';
 import { generatePlan, INTERESTS, PACES } from './planEngine';
 import ItineraryMap from './ItineraryMap';
 import WeatherWidget from './WeatherWidget';
+import InstallPrompt from './InstallPrompt';
 
 const T={bg:"#F5F7FB",surface:"#FFFFFF",ink:"#0F172A",inkSoft:"#475569",inkMute:"#94A3B8",line:"#E2E8F0",primary:"#1D4ED8",primarySoft:"#DBEAFE",gold:"#C59D5F",goldSoft:"#FBF5EB",ok:"#059669",okSoft:"#D1FAE5",warn:"#D97706",warnSoft:"#FEF3C7",danger:"#E11D48",dangerSoft:"#FFE4E6",dark:"#0B1220",sh:{hero:"0 20px 50px rgba(15,23,42,0.16)"}};
 const fd="'Plus Jakarta Sans',system-ui,sans-serif";
@@ -669,7 +670,29 @@ export default function IstanbulGo(){
           </div>}
 
           {/* ── BOOK ── */}
-          {tab==="book"&&<div><div style={{display:"flex",alignItems:"center",gap:12,marginBottom:20}}><Bk onClick={()=>goTab("home")}/><div><Lbl>Commerce</Lbl><div style={{fontSize:24,fontWeight:800,fontFamily:fd}}>Tickets & Passes</div></div></div><div style={{display:"flex",gap:6,overflowX:"auto",marginBottom:16}}>{cats.map(c=><div key={c} onClick={()=>setBookFilter(c)} style={{padding:"7px 14px",borderRadius:99,fontSize:12,fontWeight:600,cursor:"pointer",whiteSpace:"nowrap",background:bookFilter===c?T.dark:"white",color:bookFilter===c?"white":T.inkSoft,border:bookFilter===c?"none":`1px solid ${T.line}`}}>{c}</div>)}</div><Lbl>{filteredATT.length} results</Lbl>{filteredATT.map(a=><div key={a.id} onClick={()=>setPreviewAtt(a)} style={{display:"flex",alignItems:"center",gap:12,borderRadius:22,background:"white",border:`1px solid ${T.line}`,padding:12,marginBottom:12,cursor:"pointer"}}><img src={a.img} alt={a.title} style={{width:64,height:64,borderRadius:16,objectFit:"cover"}}/><div style={{flex:1,minWidth:0}}><div style={{fontSize:14,fontWeight:700}}>{a.title}</div><div style={{fontSize:12,color:T.inkMute,marginTop:4}}>{a.cat} · {a.dur}{a.skip?" · Skip line":""}</div></div><div style={{textAlign:"right",flexShrink:0}}><div style={{fontSize:18,fontWeight:800}}>€{a.price}</div><div style={{display:"flex",gap:6,marginTop:6}}><div onClick={e=>{e.stopPropagation();toggleFav(a.id)}} style={{width:32,height:32,borderRadius:10,background:favs.has(a.id)?T.dangerSoft:"#F1F5F9",display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer"}}><Heart size={14} color={favs.has(a.id)?T.danger:T.inkMute} fill={favs.has(a.id)?T.danger:"none"}/></div><div onClick={(e)=>{e.stopPropagation();handleBook(a)}} style={{display:"flex",alignItems:"center",gap:4,padding:"6px 12px",borderRadius:10,background:"linear-gradient(135deg,#1D4ED8,#1E40AF)",color:"white",fontSize:12,fontWeight:700,cursor:"pointer"}}>Book</div></div></div></div>)}</div>}
+          {tab==="book"&&<div><div style={{display:"flex",alignItems:"center",gap:12,marginBottom:20}}><Bk onClick={()=>goTab("home")}/><div><Lbl>Commerce</Lbl><div style={{fontSize:24,fontWeight:800,fontFamily:fd}}>Tickets & Passes</div></div></div><div style={{display:"flex",gap:6,overflowX:"auto",marginBottom:16}}>{cats.map(c=><div key={c} onClick={()=>setBookFilter(c)} style={{padding:"7px 14px",borderRadius:99,fontSize:12,fontWeight:600,cursor:"pointer",whiteSpace:"nowrap",background:bookFilter===c?T.dark:"white",color:bookFilter===c?"white":T.inkSoft,border:bookFilter===c?"none":`1px solid ${T.line}`}}>{c}</div>)}</div><Lbl>{filteredATT.length} results</Lbl>{filteredATT.map(a=><div key={a.id} onClick={()=>setPreviewAtt(a)} style={{display:"flex",alignItems:"center",gap:12,borderRadius:22,background:"white",border:`1px solid ${myTickets.includes(a.id)?T.ok+"55":T.line}`,padding:12,marginBottom:12,cursor:"pointer",position:"relative"}}>
+            <div style={{position:"relative",flexShrink:0}}>
+              <img src={a.img} alt={a.title} style={{width:64,height:64,borderRadius:16,objectFit:"cover"}}/>
+              {myTickets.includes(a.id)&&<div style={{position:"absolute",bottom:-3,right:-3,width:22,height:22,borderRadius:11,background:T.ok,border:"2px solid white",display:"flex",alignItems:"center",justifyContent:"center"}}><Check size={11} color="white"/></div>}
+            </div>
+            <div style={{flex:1,minWidth:0}}>
+              <div style={{fontSize:14,fontWeight:700}}>{a.title}</div>
+              <div style={{fontSize:12,color:T.inkMute,marginTop:4}}>{a.cat} · {a.dur}{a.skip?" · Skip line":""}</div>
+              <div style={{fontSize:11,color:T.primary,marginTop:6,fontWeight:600,display:"flex",alignItems:"center",gap:3}}>Tap for details<ChevronRight size={11}/></div>
+            </div>
+            <div style={{textAlign:"right",flexShrink:0,display:"flex",flexDirection:"column",alignItems:"flex-end",gap:6}}>
+              <div style={{fontSize:18,fontWeight:800}}>€{a.price}</div>
+              <div style={{display:"flex",gap:5}}>
+                <div onClick={e=>{e.stopPropagation();toggleFav(a.id)}} title="Save to favorites" style={{width:30,height:30,borderRadius:9,background:favs.has(a.id)?T.dangerSoft:"#F1F5F9",display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer"}}><Heart size={13} color={favs.has(a.id)?T.danger:T.inkMute} fill={favs.has(a.id)?T.danger:"none"}/></div>
+                <div onClick={e=>{e.stopPropagation();toggleTicket(a.id)}} title="I have this ticket" style={{width:30,height:30,borderRadius:9,background:myTickets.includes(a.id)?T.okSoft:"#F1F5F9",display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer"}}><Ticket size={13} color={myTickets.includes(a.id)?T.ok:T.inkMute}/></div>
+              </div>
+              {myTickets.includes(a.id)?
+                <div style={{display:"inline-flex",alignItems:"center",gap:3,padding:"5px 10px",borderRadius:9,background:T.okSoft,color:T.ok,fontSize:11,fontWeight:700}}><Check size={11}/>Got it</div>
+                :
+                <div onClick={(e)=>{e.stopPropagation();handleBook(a)}} style={{display:"flex",alignItems:"center",gap:4,padding:"6px 14px",borderRadius:10,background:"linear-gradient(135deg,#1D4ED8,#1E40AF)",color:"white",fontSize:12,fontWeight:700,cursor:"pointer"}}>Book</div>
+              }
+            </div>
+          </div>)}</div>}
 
           {/* ── EXPLORE — Guide Hub ── */}
           {tab==="explore"&&!activeGuide&&<div><div style={{display:"flex",alignItems:"center",gap:12,marginBottom:20}}><Bk onClick={()=>goTab("home")}/><div><Lbl>Discover</Lbl><div style={{fontSize:24,fontWeight:800,fontFamily:fd}}>Explore Istanbul</div></div></div><div style={{fontSize:13,color:T.inkSoft,lineHeight:1.6,marginBottom:20}}>Curated guides to help you make the most of your trip.</div>{GUIDES.map(g=><div key={g.id} onClick={()=>g.id==="neighborhoods"?setGuideId("neighborhoods"):setGuideId(g.id)} style={{borderRadius:20,background:"white",border:`1px solid ${T.line}`,padding:"14px 16px",marginBottom:10,display:"flex",alignItems:"center",gap:14,cursor:"pointer"}}><div style={{fontSize:28,width:44,textAlign:"center"}}>{g.emoji}</div><div style={{flex:1}}><div style={{fontSize:15,fontWeight:700}}>{g.title}</div><div style={{fontSize:12,color:T.inkMute,marginTop:2}}>{g.sub}</div></div><ChevronRight size={16} color={T.inkMute}/></div>)}
@@ -816,6 +839,9 @@ export default function IstanbulGo(){
         {/* BOTTOM NAV */}
         <div style={{position:"absolute",bottom:0,left:0,right:0,borderTop:`1px solid ${T.line}`,background:"rgba(255,255,255,0.95)",padding:"8px 12px 24px",backdropFilter:"blur(12px)"}}><div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr 1fr",gap:2}}>{[{id:"home",Icon:Compass,l:t("nav.home")},{id:"plan",Icon:Sparkles,l:t("nav.plan")},{id:"book",Icon:Ticket,l:t("nav.book")},{id:"explore",Icon:MapPin,l:t("nav.explore")},{id:"trip",Icon:Package,l:t("nav.trip")}].map(n=>{const on=tab===n.id;return<div key={n.id} onClick={()=>goTab(n.id)} style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",borderRadius:16,padding:"8px 4px 6px",cursor:"pointer",background:on?T.primarySoft:"transparent"}}><n.Icon size={19} color={on?T.primary:T.inkSoft} strokeWidth={on?2:1.75}/><span style={{marginTop:3,fontSize:10,fontWeight:600,color:on?T.primary:T.inkSoft}}>{n.l}</span></div>})}</div></div>
 
+        {/* INSTALL PROMPT */}
+        <InstallPrompt/>
+
         {/* HAMBURGER MENU — inside frame */}
         {menuOpen && (
           <div style={{position:"absolute",inset:0,zIndex:300,overflow:"hidden"}}>
@@ -934,7 +960,7 @@ export default function IstanbulGo(){
       />
 
       {/* FULL DETAIL */}
-      {detailAtt&&<AttractionSheet attraction={detailAtt} allAttractions={ATT} onClose={()=>setDetailAtt(null)} onFav={toggleFav} isFav={favs.has(detailAtt.id)} onOpenOther={a=>setDetailAtt(a)} isPremium={isPremium} onUpgrade={()=>setPremiumOpen(true)} onBook={handleBook}/>}
+      {detailAtt&&<AttractionSheet attraction={detailAtt} allAttractions={ATT} onClose={()=>setDetailAtt(null)} onFav={toggleFav} isFav={favs.has(detailAtt.id)} onOpenOther={a=>setDetailAtt(a)} isPremium={isPremium} onUpgrade={()=>setPremiumOpen(true)} onBook={handleBook} myTickets={myTickets} onToggleTicket={toggleTicket}/>}
 
       {/* HESAP */}
       {accountOpen && (

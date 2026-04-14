@@ -31,7 +31,7 @@ const D = {
   camlica:{gallery:["/camlica.jpg"],reviews:"12K+",whyGo:"Panoramic view of the entire city from the Asian side. Way less crowded than Galata Tower. The highest point in Istanbul — and almost no tourists.",facts:[{l:"Entry",v:"Free"},{l:"Duration",v:"1–2h"},{l:"Area",v:"Üsküdar"},{l:"Rating",v:"4.7 ⭐"}],bestTime:["Sunset for the best light","Clear weather is essential","Weekdays are nearly empty"],skipStrategy:{free:"No ticket needed. Drive, taxi, or bus up the hill."},photoSpot:{free:"The main terrace facing west — you see both bridges, mosques, and the entire skyline."},timeReality:{quick:"30 min (viewpoint + photos)",ideal:"1–2h (gardens + mosque + café + sunset)",note:"The new Çamlıca Mosque nearby is also worth visiting."},goodToKnow:["Highest point in Istanbul","New Çamlıca Mosque is Turkey's largest — opened 2019","Large gardens and walking paths","Café and restaurant at the top","On the Asian side — combine with Üsküdar"],commonMistakes:["Going on a hazy day","Not combining with Üsküdar/Maiden's Tower","Underestimating the hill (taxi recommended)","Skipping the new mosque"],smartPrice:{gate:"Free",better:"No ticket needed",why:"Budget for café at the top and taxi up"},nearby:["maiden","pierreloti"],comboTip:"Üsküdar → Maiden's Tower → taxi to Çamlıca → sunset"},
 };
 
-export default function AttractionSheet({ attraction, allAttractions, onClose, onFav, isFav, onOpenOther, isPremium, onUpgrade, onBook }) {
+export default function AttractionSheet({ attraction, allAttractions, onClose, onFav, isFav, onOpenOther, isPremium, onUpgrade, onBook, myTickets = [], onToggleTicket }) {
   const [gi, setGi] = useState(0);
   const [vis, setVis] = useState(false);
   const scrollRef = useRef(null);
@@ -100,13 +100,30 @@ export default function AttractionSheet({ attraction, allAttractions, onClose, o
         <div style={{ flexShrink: 0, borderTop: `1px solid ${C.line}`, background: "rgba(255,255,255,0.97)", backdropFilter: "blur(10px)", padding: "12px 16px 18px" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             <div style={{ flex: 1 }}>
-              {attraction.price > 0 && <div style={{ fontSize: 10, color: C.warn, fontWeight: 600, marginBottom: 2 }}>⏳ Sells out in peak season</div>}
+              {attraction.price > 0 && !myTickets.includes(attraction.id) && <div style={{ fontSize: 10, color: C.warn, fontWeight: 600, marginBottom: 2 }}>⏳ Sells out in peak season</div>}
+              {myTickets.includes(attraction.id) && <div style={{ fontSize: 10, color: "#10B981", fontWeight: 700, marginBottom: 2, display: "flex", alignItems: "center", gap: 4 }}><Check size={11}/>Ticket marked</div>}
               <div style={{ fontSize: 10, color: C.inkMute }}>{attraction.price > 0 ? "From" : "Entry"}</div>
               <div style={{ fontSize: 26, fontWeight: 800, letterSpacing: "-0.03em" }}>{attraction.price > 0 ? `€${attraction.price}` : "Free"}</div>
             </div>
             <div onClick={() => { if (onFav) onFav(attraction.id); }} style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 4, padding: "12px 14px", borderRadius: 14, border: `1.5px solid ${C.line}`, fontSize: 12, fontWeight: 600, color: C.ink, cursor: "pointer", background: "white" }}>+ My Day</div>
-            {attraction.price > 0 && attraction.link && <div onClick={() => onBook && onBook(attraction)} style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 6, padding: "12px 18px", borderRadius: 14, background: "linear-gradient(135deg,#1D4ED8,#1E40AF)", color: "white", fontSize: 13, fontWeight: 700, cursor: "pointer", boxShadow: "0 4px 14px rgba(29,78,216,0.3)" }}>{attraction.skip ? "Skip the Line →" : "Reserve Your Spot →"}</div>}
+            {attraction.price > 0 && attraction.link && (
+              myTickets.includes(attraction.id) ? (
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 6, padding: "12px 18px", borderRadius: 14, background: "#D1FAE5", color: "#065F46", fontSize: 13, fontWeight: 700, border: "1.5px solid #10B981" }}>
+                  <Check size={14}/>Got ticket
+                </div>
+              ) : (
+                <div onClick={() => onBook && onBook(attraction)} style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 6, padding: "12px 18px", borderRadius: 14, background: "linear-gradient(135deg,#1D4ED8,#1E40AF)", color: "white", fontSize: 13, fontWeight: 700, cursor: "pointer", boxShadow: "0 4px 14px rgba(29,78,216,0.3)" }}>{attraction.skip ? "Skip the Line →" : "Reserve Your Spot →"}</div>
+              )
+            )}
           </div>
+          {attraction.price > 0 && attraction.link && onToggleTicket && (
+            <div onClick={() => onToggleTicket(attraction.id)} style={{ marginTop: 10, display: "flex", alignItems: "center", justifyContent: "center", gap: 6, padding: "10px", borderRadius: 12, background: myTickets.includes(attraction.id) ? "#FEF2F2" : "#F8FAFC", border: `1px dashed ${myTickets.includes(attraction.id) ? "#FCA5A5" : C.line}`, cursor: "pointer" }}>
+              <Ticket size={13} color={myTickets.includes(attraction.id) ? "#DC2626" : C.inkSoft}/>
+              <span style={{ fontSize: 12, fontWeight: 600, color: myTickets.includes(attraction.id) ? "#DC2626" : C.inkSoft }}>
+                {myTickets.includes(attraction.id) ? "Remove from My Tickets" : "Already got your ticket? Mark as owned"}
+              </span>
+            </div>
+          )}
         </div>
       </div>
     </div>
