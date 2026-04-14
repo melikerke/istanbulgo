@@ -167,6 +167,12 @@ export default function IstanbulGo(){
   const[tripTab,setTripTab]=useState("favorites");
   const[ticketSearch,setTicketSearch]=useState("");
   const[menuOpen,setMenuOpen]=useState(false);
+  const[isPWA,setIsPWA]=useState(false);
+
+  useEffect(()=>{
+    const check=()=>window.matchMedia("(display-mode: standalone)").matches||window.navigator.standalone===true;
+    setIsPWA(check());
+  },[]);
   const[planDays,setPlanDays]=useState(null);
   const[planPace,setPlanPace]=useState(null);
   const[planInterests,setPlanInterests]=useState([]);
@@ -317,14 +323,14 @@ export default function IstanbulGo(){
         <Skip/>
       </div>,
     ];
-    return(<div style={{minHeight:"100vh",background:"radial-gradient(circle at top,#eaf2ff 0%,#f5f7fb 35%)",padding:16,fontFamily:fi}}><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet"/><div style={{maxWidth:440,margin:"0 auto",borderRadius:34,border:"1px solid rgba(255,255,255,0.7)",background:"white",boxShadow:T.sh.hero,overflow:"hidden",display:"flex",flexDirection:"column",height:"calc(100vh - 32px)"}}>{obStep>0&&<div style={{padding:"16px 24px 0",display:"flex",gap:6,flexShrink:0}}>{[1,2,3].map(s=><div key={s} style={{flex:1,height:3,borderRadius:2,background:s<=obStep?T.primary:T.line}}/>)}</div>}<div style={{flex:1,overflowY:"auto",display:"flex",flexDirection:"column",justifyContent:"center"}}>{steps[obStep]}</div></div></div>);
+    return(<div style={{minHeight:"100vh",background:isPWA?T.dark:"radial-gradient(circle at top,#eaf2ff 0%,#f5f7fb 35%)",padding:isPWA?0:16,fontFamily:fi}}><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet"/><div style={{maxWidth:isPWA?"100%":440,margin:"0 auto",borderRadius:isPWA?0:34,border:isPWA?"none":"1px solid rgba(255,255,255,0.7)",background:"white",boxShadow:isPWA?"none":T.sh.hero,overflow:"hidden",display:"flex",flexDirection:"column",height:isPWA?"100vh":"calc(100vh - 32px)",paddingTop:isPWA?"env(safe-area-inset-top)":0,paddingBottom:isPWA?"env(safe-area-inset-bottom)":0}}>{obStep>0&&<div style={{padding:"16px 24px 0",display:"flex",gap:6,flexShrink:0}}>{[1,2,3].map(s=><div key={s} style={{flex:1,height:3,borderRadius:2,background:s<=obStep?T.primary:T.line}}/>)}</div>}<div style={{flex:1,overflowY:"auto",display:"flex",flexDirection:"column",justifyContent:"center"}}>{steps[obStep]}</div></div></div>);
   }
 
   // ═══ MAIN ═══
   return(
-    <div style={{minHeight:"100vh",background:"radial-gradient(circle at top,#eaf2ff 0%,#f5f7fb 35%)",padding:16,fontFamily:fi}}>
+    <div style={{minHeight:"100vh",background:isPWA?T.dark:"radial-gradient(circle at top,#eaf2ff 0%,#f5f7fb 35%)",padding:isPWA?0:16,fontFamily:fi}}>
       <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet"/>
-      <div style={{maxWidth:440,margin:"0 auto",borderRadius:34,border:"1px solid rgba(255,255,255,0.7)",background:"white",boxShadow:T.sh.hero,overflow:"hidden",position:"relative",display:"flex",flexDirection:"column",height:"calc(100vh - 32px)"}}>
+      <div style={{maxWidth:isPWA?"100%":440,margin:"0 auto",borderRadius:isPWA?0:34,border:isPWA?"none":"1px solid rgba(255,255,255,0.7)",background:"white",boxShadow:isPWA?"none":T.sh.hero,overflow:"hidden",position:"relative",display:"flex",flexDirection:"column",height:isPWA?"100vh":"calc(100vh - 32px)",paddingTop:isPWA?"env(safe-area-inset-top)":0,paddingBottom:isPWA?"env(safe-area-inset-bottom)":0}}>
 
         {/* HEADER */}
         <div style={{position:"relative",overflow:"hidden",background:`linear-gradient(180deg,${T.dark} 0%,#16233B 58%,#1A2B45 100%)`,padding:"32px 20px 20px",color:"white"}}>
