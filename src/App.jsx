@@ -353,7 +353,7 @@ export default function IstanbulGo(){
         </div>
 
         {/* CONTENT */}
-        <div style={{flex:1,overflowY:"auto",background:`linear-gradient(180deg,#F8FBFF 0%,${T.bg} 24%)`,padding:"20px 20px 110px",position:"relative"}}>
+        <div style={{flex:1,overflowY:"auto",background:`linear-gradient(180deg,#F8FBFF 0%,${T.bg} 24%)`,padding:"20px 20px 140px",position:"relative"}}>
 
           {/* Search results overlay */}
           {searchFocused&&(()=>{
@@ -843,7 +843,7 @@ export default function IstanbulGo(){
         </div>
 
         {/* BOTTOM NAV */}
-        <div style={{position:"absolute",bottom:0,left:0,right:0,borderTop:`1px solid ${T.line}`,background:"rgba(255,255,255,0.95)",padding:"8px 12px 24px",backdropFilter:"blur(12px)"}}><div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr 1fr",gap:2}}>{[{id:"home",Icon:Compass,l:t("nav.home")},{id:"plan",Icon:Sparkles,l:t("nav.plan")},{id:"book",Icon:Ticket,l:t("nav.book")},{id:"explore",Icon:MapPin,l:t("nav.explore")},{id:"trip",Icon:Package,l:t("nav.trip")}].map(n=>{const on=tab===n.id;return<div key={n.id} onClick={()=>goTab(n.id)} style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",borderRadius:16,padding:"8px 4px 6px",cursor:"pointer",background:on?T.primarySoft:"transparent"}}><n.Icon size={19} color={on?T.primary:T.inkSoft} strokeWidth={on?2:1.75}/><span style={{marginTop:3,fontSize:10,fontWeight:600,color:on?T.primary:T.inkSoft}}>{n.l}</span></div>})}</div></div>
+        <div style={{position:"absolute",bottom:0,left:0,right:0,borderTop:`1px solid ${T.line}`,background:"white",padding:"8px 12px 24px",zIndex:50}}><div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr 1fr",gap:2}}>{[{id:"home",Icon:Compass,l:t("nav.home")},{id:"plan",Icon:Sparkles,l:t("nav.plan")},{id:"book",Icon:Ticket,l:t("nav.book")},{id:"explore",Icon:MapPin,l:t("nav.explore")},{id:"trip",Icon:Package,l:t("nav.trip")}].map(n=>{const on=tab===n.id;return<div key={n.id} onClick={()=>goTab(n.id)} style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",borderRadius:16,padding:"8px 4px 6px",cursor:"pointer",background:on?T.primarySoft:"transparent"}}><n.Icon size={19} color={on?T.primary:T.inkSoft} strokeWidth={on?2:1.75}/><span style={{marginTop:3,fontSize:10,fontWeight:600,color:on?T.primary:T.inkSoft}}>{n.l}</span></div>})}</div></div>
 
         {/* INSTALL PROMPT */}
         <InstallPrompt/>
