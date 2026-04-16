@@ -67,39 +67,65 @@ const DAY_TITLES = {
 // ══════════════════════════════════════════════
 // Ana fonksiyon: generatePlan
 // ══════════════════════════════════════════════
-export function generatePlan({ days, pace, interests }) {
+export function generatePlan({ days, pace, interests, timedTickets = {}, tripStartDate = null }) {
   const config = PACE_CONFIG[pace] || PACE_CONFIG.balanced;
   const totalSpots = days * config.spotsPerDay;
 
-  // 1. İlgi alanına göre attraction'ları filtrele ve skorla
-  let candidates = Object.entries(ATTRACTION_TAGS).map(([id, data]) => {
-    let score = data.priority;
-    // İlgi alanı eşleşme bonusu
-    const matchCount = data.tags.filter(tag => interests.includes(tag)).length;
-    score += matchCount * 5;
-    // "must" tag'i her zaman yüksek skor alır
-    if (data.tags.includes("must")) score += 3;
-    return { id, ...data, score };
+  // ── TIMED TICKETS HAZIRLIĞI ──
+  // Her timed ticket'ı hangi güne düştüğünü hesapla
+  const timedEntries = [];
+  Object.entries(timedTickets).forEach(([id, info]) => {
+    const data = ATTRACTION_TAGS[id];
+    if (!data) return;
+
+    let fixedDay = 0; // varsayılan Day 1
+
+    if (tripStartDate) {
+      // Seyahat tarihi varsa → bilet tarihine göre gün hesapla
+      const startDate = new Date(tripStartDate);
+      const ticketDate = new Date(info.date);
+      const dayDiff = Math.floor((ticketDate - startDate) / (1000 * 60 * 60 * 24));
+      if (dayDiff < 0 || dayDiff >= days) return; // plan dışındaki biletleri atla
+      fixedDay = dayDiff;
+    }
+    // Tarih yoksa → Day 1'e koy (fixedDay = 0)
+
+    timedEntries.push({
+      id,
+      ...data,
+      fixedDay,
+      fixedTime: info.time,
+      isTimed: true,
+    });
   });
 
-  // Interest seçilmediyse tüm attractionlar aday — must'lar ve yüksek priority olanlar zaten üste çıkar
-  // Böylece 7 güne kadar plan üretilebilir
+  const timedIds = new Set(timedEntries.map((t) => t.id));
+
+  // 1. İlgi alanına göre attraction'ları filtrele ve skorla (timed'ları hariç tut, duplikasyon olmasın)
+  let candidates = Object.entries(ATTRACTION_TAGS)
+    .filter(([id]) => !timedIds.has(id))
+    .map(([id, data]) => {
+      let score = data.priority;
+      const matchCount = data.tags.filter((tag) => interests.includes(tag)).length;
+      score += matchCount * 5;
+      if (data.tags.includes("must")) score += 3;
+      return { id, ...data, score };
+    });
 
   // Skor sırasına diz
   candidates.sort((a, b) => b.score - a.score);
 
-  // 2. En yüksek skorlu totalSpots kadarını al (aday sayısından fazla isteniyorsa hepsini al)
-  const selected = candidates.slice(0, Math.min(totalSpots, candidates.length));
+  // 2. Gerekli spot sayısı kadar al (timed ticketları zaten sayıyoruz)
+  const remainingSpots = Math.max(0, totalSpots - timedEntries.length);
+  const selected = candidates.slice(0, Math.min(remainingSpots, candidates.length));
 
   // 3. Bölgeye göre grupla (rota optimizasyonu)
   const byGroup = { oldcity: [], newcity: [], asian: [], special: [] };
-  selected.forEach(s => {
+  selected.forEach((s) => {
     const group = Object.entries(AREA_GROUPS).find(([_, areas]) => areas.includes(s.area))?.[0] || "special";
     byGroup[group].push(s);
   });
 
-  // 4. Günlere dağıt
-  const dayPlans = [];
   const allSpots = [
     ...byGroup.oldcity,
     ...byGroup.newcity,
@@ -107,9 +133,59 @@ export function generatePlan({ days, pace, interests }) {
     ...byGroup.special,
   ];
 
+  // 4. Günleri başta boş dizi olarak hazırla
+  const daySpotArrays = Array.from({ length: days }, () => []);
+
+  // 5. Önce TIMED biletleri doğru günlere yerleştir (sabit)
+  timedEntries.forEach((te) => {
+    daySpotArrays[te.fixedDay].push(te);
+  });
+
+  // 6. Sonra diğer spotları boş slotlara dağıt
+  // Timed biletlerin olduğu gün çevresindeki spotları o gün içinde optimize et
+  let spotIdx = 0;
   for (let d = 0; d < days; d++) {
-    const daySpots = allSpots.slice(d * config.spotsPerDay, (d + 1) * config.spotsPerDay);
+    const currentDayCount = daySpotArrays[d].length;
+    const remainingInDay = config.spotsPerDay - currentDayCount;
+
+    // Timed ticket varsa, o bölgeye yakın spotları tercih et
+    if (daySpotArrays[d].some((s) => s.isTimed)) {
+      const timedAreas = daySpotArrays[d].filter((s) => s.isTimed).map((s) => s.area);
+      // Aynı bölgeden olanları öncele
+      const sameAreaSpots = allSpots.filter((s, i) => i >= spotIdx && timedAreas.includes(s.area));
+      sameAreaSpots.slice(0, remainingInDay).forEach((spot) => {
+        daySpotArrays[d].push(spot);
+        const origIdx = allSpots.indexOf(spot);
+        allSpots.splice(origIdx, 1);
+      });
+    }
+
+    // Kalan slotları sırayla doldur
+    while (daySpotArrays[d].length < config.spotsPerDay && spotIdx < allSpots.length) {
+      if (!daySpotArrays[d].includes(allSpots[spotIdx])) {
+        daySpotArrays[d].push(allSpots[spotIdx]);
+        spotIdx++;
+      } else {
+        spotIdx++;
+      }
+    }
+  }
+
+  // 7. Her gün içinde timed ticket'ı doğru saate yerleştir, diğerlerini ona göre zamanla
+  const dayPlans = [];
+  const tripStart = tripStartDate ? new Date(tripStartDate) : null;
+
+  for (let d = 0; d < days; d++) {
+    const daySpots = daySpotArrays[d];
     if (daySpots.length === 0) continue;
+
+    // Timed ticket'a göre sırala: timed olan sabit kalır, diğerleri önünde/arkasında
+    daySpots.sort((a, b) => {
+      if (a.isTimed && b.isTimed) return a.fixedTime.localeCompare(b.fixedTime);
+      if (a.isTimed) return 0;
+      if (b.isTimed) return 0;
+      return 0;
+    });
 
     // Gün başlığı seç
     let title = DAY_TITLES.mix;
@@ -117,33 +193,75 @@ export function generatePlan({ days, pace, interests }) {
     if (["sultanahmet", "eminonu"].includes(firstArea)) title = DAY_TITLES.oldcity;
     else if (["besiktas", "beyoglu"].includes(firstArea)) title = DAY_TITLES.newcity;
     else if (firstArea === "uskudar") title = DAY_TITLES.asian;
-    else if (daySpots.some(s => s.tags.includes("water"))) title = DAY_TITLES.water;
-    else if (daySpots.some(s => s.tags.includes("food"))) title = DAY_TITLES.food;
+    else if (daySpots.some((s) => s.tags.includes("water"))) title = DAY_TITLES.water;
+    else if (daySpots.some((s) => s.tags.includes("food"))) title = DAY_TITLES.food;
 
-    // Zaman çizelgesi oluştur
-    let currentMin = config.startHour * 60; // başlangıç dakika cinsinden
-    const items = daySpots.map((spot, idx) => {
-      const t = `${String(Math.floor(currentMin / 60)).padStart(2, "0")}:${String(currentMin % 60).padStart(2, "0")}`;
-      const durH = Math.floor(spot.duration / 60);
-      const durM = spot.duration % 60;
-      const durStr = durH > 0 ? (durM > 0 ? `${durH}h ${durM}m` : `${durH}h`) : `${durM}m`;
+    // ── ZAMAN ÇİZELGESİ ──
+    // Önce timed ticket'ları sabit yerleştir, sonra diğerlerini sıkıştır
+    const scheduledItems = [];
+    const nonTimedSpots = daySpots.filter((s) => !s.isTimed);
+    const timedSpots = daySpots.filter((s) => s.isTimed).sort((a, b) => a.fixedTime.localeCompare(b.fixedTime));
 
-      const item = {
-        id: spot.id,
-        t,
-        n: spot.id, // App.jsx içinde title alınacak
-        m: `${durStr} · ${spot.tags[0]}`,
-        tp: spot.tags[0],
-      };
-      currentMin += spot.duration + config.bufferMin;
-      return item;
-    });
+    // Gün başlangıcı
+    let currentMin = config.startHour * 60;
 
-    // Lunch break ekle (3+ spot varsa)
-    if (items.length >= 3) {
-      const lunchIdx = Math.floor(items.length / 2);
-      const lunchTime = items[lunchIdx].t;
-      items.splice(lunchIdx, 0, {
+    // Kolay durum: hiç timed yok → normal sıralama
+    if (timedSpots.length === 0) {
+      daySpots.forEach((spot) => {
+        const t = minsToTime(currentMin);
+        scheduledItems.push(buildItem(spot, t));
+        currentMin += spot.duration + config.bufferMin;
+      });
+    } else {
+      // Timed var → timed'ları merkez al, etrafına yerleştir
+      // Strateji: Timed ticketları saatine göre sırala, aralara non-timed'ları sıkıştır
+      const allOrdered = [];
+      let nonTimedIdx = 0;
+
+      for (let i = 0; i < timedSpots.length; i++) {
+        const timed = timedSpots[i];
+        const timedMin = timeToMins(timed.fixedTime);
+
+        // Timed'dan önce sığacak kadar non-timed ekle
+        while (nonTimedIdx < nonTimedSpots.length) {
+          const candidate = nonTimedSpots[nonTimedIdx];
+          const endTime = currentMin + candidate.duration + config.bufferMin;
+          if (endTime <= timedMin) {
+            allOrdered.push({ spot: candidate, startMin: currentMin });
+            currentMin = endTime;
+            nonTimedIdx++;
+          } else {
+            break;
+          }
+        }
+
+        // Timed ticket'ı yerleştir
+        allOrdered.push({ spot: timed, startMin: timedMin, fixedTime: timed.fixedTime });
+        currentMin = timedMin + timed.duration + config.bufferMin;
+      }
+
+      // Kalan non-timed'ları sona ekle
+      while (nonTimedIdx < nonTimedSpots.length) {
+        const candidate = nonTimedSpots[nonTimedIdx];
+        allOrdered.push({ spot: candidate, startMin: currentMin });
+        currentMin += candidate.duration + config.bufferMin;
+        nonTimedIdx++;
+      }
+
+      // Item formatına çevir
+      allOrdered.forEach(({ spot, startMin, fixedTime }) => {
+        const t = fixedTime || minsToTime(startMin);
+        const item = buildItem(spot, t);
+        if (fixedTime) item.fixed = true;
+        scheduledItems.push(item);
+      });
+    }
+
+    // Lunch break ekle (3+ spot varsa ve timed yoksa)
+    if (scheduledItems.length >= 3 && timedSpots.length === 0) {
+      const lunchIdx = Math.floor(scheduledItems.length / 2);
+      const lunchTime = scheduledItems[lunchIdx].t;
+      scheduledItems.splice(lunchIdx, 0, {
         id: null,
         t: lunchTime,
         n: "Lunch break",
@@ -152,10 +270,43 @@ export function generatePlan({ days, pace, interests }) {
       });
     }
 
-    dayPlans.push({ day: d + 1, title, items });
+    // Gerçek tarih hesapla
+    let dateLabel = null;
+    if (tripStart) {
+      const dayDate = new Date(tripStart);
+      dayDate.setDate(dayDate.getDate() + d);
+      dateLabel = dayDate.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
+    }
+
+    dayPlans.push({ day: d + 1, title, items: scheduledItems, dateLabel });
   }
 
   return { days: dayPlans };
+}
+
+// Yardımcı: dakikayı "HH:MM" formatına çevir
+function minsToTime(mins) {
+  return `${String(Math.floor(mins / 60)).padStart(2, "0")}:${String(mins % 60).padStart(2, "0")}`;
+}
+
+// Yardımcı: "HH:MM"'yi dakikaya çevir
+function timeToMins(timeStr) {
+  const [h, m] = timeStr.split(":").map(Number);
+  return h * 60 + m;
+}
+
+// Yardımcı: spot'tan item oluştur
+function buildItem(spot, t) {
+  const durH = Math.floor(spot.duration / 60);
+  const durM = spot.duration % 60;
+  const durStr = durH > 0 ? (durM > 0 ? `${durH}h ${durM}m` : `${durH}h`) : `${durM}m`;
+  return {
+    id: spot.id,
+    t,
+    n: spot.id,
+    m: `${durStr} · ${spot.tags[0]}`,
+    tp: spot.tags[0],
+  };
 }
 
 // ══════════════════════════════════════════════

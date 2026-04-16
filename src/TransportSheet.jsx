@@ -14,6 +14,7 @@ import {
   ChevronRight, Check, Zap, QrCode, Plane, Info, AlertTriangle,
   Smartphone, Download
 } from "lucide-react";
+import { useLanguage } from "./LanguageContext";
 
 const C = {
   ink: "#0F172A", inkSoft: "#475569", inkMute: "#94A3B8",
@@ -26,6 +27,7 @@ const C = {
 const fd = "'Plus Jakarta Sans',system-ui,sans-serif";
 
 export default function TransportSheet({ onClose }) {
+  const { t } = useLanguage();
   const [vis, setVis] = useState(false);
 
   useEffect(() => { setTimeout(() => setVis(true), 10); }, []);
@@ -71,7 +73,7 @@ export default function TransportSheet({ onClose }) {
                 <ArrowLeft size={16} color="white" />
               </button>
               <div style={{ fontSize: 10, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.12em", color: "rgba(255,255,255,0.5)" }}>
-                Get around
+                {t("transport.getAround")}
               </div>
             </div>
             <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
@@ -79,8 +81,8 @@ export default function TransportSheet({ onClose }) {
                 <Train size={28} color="#6EE7B7" />
               </div>
               <div>
-                <div style={{ fontSize: 24, fontWeight: 800, fontFamily: fd, letterSpacing: "-0.03em" }}>Istanbul Transport</div>
-                <div style={{ fontSize: 13, color: "rgba(255,255,255,0.6)", marginTop: 4 }}>One card, every ride — metro, tram, ferry & more</div>
+                <div style={{ fontSize: 24, fontWeight: 800, fontFamily: fd, letterSpacing: "-0.03em" }}>{t("transport.title")}</div>
+                <div style={{ fontSize: 13, color: "rgba(255,255,255,0.6)", marginTop: 4 }}>{t("transport.subtitle")}</div>
               </div>
             </div>
           </div>
@@ -93,24 +95,24 @@ export default function TransportSheet({ onClose }) {
              1. KARAR KARTI
           ════════════════════════════ */}
           <Sec bg="linear-gradient(135deg, #EFF6FF, #F8FAFC)">
-            <Title>Which one should I get?</Title>
+            <Title>{t("transport.whichOne")}</Title>
             {[
               {
-                icon: CreditCard, label: "Normal Istanbulkart",
-                who: "3-day trip · flexible use",
-                desc: "Pay-as-you-go. Best for most tourists.",
+                icon: CreditCard, label: t("tr.opt.normal"),
+                who: t("tr.opt.normalWho"),
+                desc: t("tr.opt.normalDesc"),
                 tone: C.okSoft, ac: C.ok, pick: true,
               },
               {
-                icon: Zap, label: "Unlimited Travel Card",
-                who: "5+ rides per day · heavy sightseeing",
-                desc: "Unlimited rides for a set number of days.",
+                icon: Zap, label: t("tr.opt.unlimited"),
+                who: t("tr.opt.unlimitedWho"),
+                desc: t("tr.opt.unlimitedDesc"),
                 tone: C.blueSoft, ac: C.blue, pick: false,
               },
               {
-                icon: QrCode, label: "Single Ride QR",
-                who: "Just 1 ride · quick visit",
-                desc: "Scan and go. No card needed.",
+                icon: QrCode, label: t("tr.opt.qr"),
+                who: t("tr.opt.qrWho"),
+                desc: t("tr.opt.qrDesc"),
                 tone: C.warnSoft, ac: C.warn, pick: false,
               },
             ].map((opt) => (
@@ -130,7 +132,7 @@ export default function TransportSheet({ onClose }) {
                     <span style={{ fontSize: 13, fontWeight: 700 }}>{opt.label}</span>
                     {opt.pick && (
                       <span style={{ fontSize: 9, fontWeight: 700, background: C.okSoft, color: C.ok, padding: "2px 6px", borderRadius: 4 }}>
-                        Best for most
+                        {t("tr.opt.bestFor")}
                       </span>
                     )}
                   </div>
@@ -144,48 +146,48 @@ export default function TransportSheet({ onClose }) {
           {/* ════════════════════════════
              2. ULAŞIM ARAÇLARI (öncelikli)
           ════════════════════════════ */}
-          <Title>The ones you'll actually use</Title>
+          <Title>{t("transport.actuallyUse")}</Title>
           {[
             {
-              icon: Train, name: "Tram T1", color: "#1D4ED8",
-              desc: "The tourist tram. Kabataş → Sultanahmet → Grand Bazaar → Bağcılar. Covers most sightseeing spots.",
-              tip: "Every 5 min · runs 06:00–00:00",
+              icon: Train, name: t("tr.mode.tram.name"), color: "#1D4ED8",
+              desc: t("tr.mode.tram.desc"),
+              tip: t("tr.mode.tram.tip"),
             },
             {
-              icon: Train, name: "Metro", color: "#E11D48",
-              desc: "Fast underground lines. M2 connects Taksim to the old city. M11 goes to Istanbul Airport.",
-              tip: "Every 3–5 min · 11 lines",
+              icon: Train, name: t("tr.mode.metro.name"), color: "#E11D48",
+              desc: t("tr.mode.metro.desc"),
+              tip: t("tr.mode.metro.tip"),
             },
             {
-              icon: Ship, name: "Ferry", color: "#0891B2",
-              desc: "Cross between Europe and Asia by water. The most scenic commute in the world. Kabataş ↔ Kadıköy is the classic route.",
-              tip: "Every 20 min · best views on the city",
+              icon: Ship, name: t("tr.mode.ferry.name"), color: "#0891B2",
+              desc: t("tr.mode.ferry.desc"),
+              tip: t("tr.mode.ferry.tip"),
             },
             {
-              icon: Train, name: "Marmaray", color: "#059669",
-              desc: "Crosses under the Bosphorus. Europe ↔ Asia in 4 minutes. Fast and reliable.",
-              tip: "Every 10 min · connects to metro",
+              icon: Train, name: t("tr.mode.marmaray.name"), color: "#059669",
+              desc: t("tr.mode.marmaray.desc"),
+              tip: t("tr.mode.marmaray.tip"),
             },
-          ].map((t) => (
-            <div key={t.name} style={{
+          ].map((m) => (
+            <div key={m.name} style={{
               borderRadius: 20, border: `1px solid ${C.line}`, background: "white",
               padding: 14, marginBottom: 10,
             }}>
               <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
                 <div style={{
                   width: 40, height: 40, borderRadius: 12,
-                  background: t.color + "15", display: "flex",
+                  background: m.color + "15", display: "flex",
                   alignItems: "center", justifyContent: "center",
                 }}>
-                  <t.icon size={18} color={t.color} />
+                  <m.icon size={18} color={m.color} />
                 </div>
                 <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: 14, fontWeight: 700 }}>{t.name}</div>
-                  <div style={{ fontSize: 12, color: C.inkSoft, marginTop: 3, lineHeight: 1.5 }}>{t.desc}</div>
+                  <div style={{ fontSize: 14, fontWeight: 700 }}>{m.name}</div>
+                  <div style={{ fontSize: 12, color: C.inkSoft, marginTop: 3, lineHeight: 1.5 }}>{m.desc}</div>
                 </div>
               </div>
-              <div style={{ marginTop: 8, display: "flex", alignItems: "center", gap: 4, fontSize: 10, color: t.color, fontWeight: 600 }}>
-                <Clock size={10} /> {t.tip}
+              <div style={{ marginTop: 8, display: "flex", alignItems: "center", gap: 4, fontSize: 10, color: m.color, fontWeight: 600 }}>
+                <Clock size={10} /> {m.tip}
               </div>
             </div>
           ))}
@@ -195,32 +197,32 @@ export default function TransportSheet({ onClose }) {
             borderRadius: 16, background: C.soft, padding: 14,
             marginBottom: 12, border: `1px solid ${C.line}`,
           }}>
-            <div style={{ fontSize: 11, fontWeight: 700, color: C.inkMute, marginBottom: 6 }}>Also available</div>
+            <div style={{ fontSize: 11, fontWeight: 700, color: C.inkMute, marginBottom: 6 }}>{t("tr.alsoAvail")}</div>
             <div style={{ fontSize: 12, color: C.inkSoft, lineHeight: 1.6 }}>
-              <strong>Metrobus</strong> — dedicated lane, never stuck in traffic, runs 24/7. Great for long distances.
+              <strong>{t("tr.metrobus")}</strong> — {t("tr.metrobusDesc")}
             </div>
             <div style={{ fontSize: 12, color: C.inkSoft, lineHeight: 1.6, marginTop: 4 }}>
-              <strong>City Buses (İETT)</strong> — cover the whole city. Useful for neighborhoods not on rail lines. Use Moovit app for routes.
+              <strong>{t("tr.citybus")}</strong> — {t("tr.citybusDesc")}
             </div>
           </div>
 
           {/* ════════════════════════════
              3. ISTANBULKART — Buy / Top up / App
           ════════════════════════════ */}
-          <Title>Getting your Istanbulkart</Title>
+          <Title>{t("transport.gettingCard")}</Title>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, marginBottom: 12 }}>
             {[
               {
-                icon: MapPin, label: "Buy",
-                lines: ["Yellow kiosks at stations", "Airport arrivals hall", "Corner shops (bakkal)"],
+                icon: MapPin, label: t("tr.kart.buy"),
+                lines: [t("tr.kart.buy1"), t("tr.kart.buy2"), t("tr.kart.buy3")],
               },
               {
-                icon: CreditCard, label: "Top up",
-                lines: ["Same yellow machines", "Cash & card accepted", "₺50–100 is enough"],
+                icon: CreditCard, label: t("tr.kart.topup"),
+                lines: [t("tr.kart.topup1"), t("tr.kart.topup2"), t("tr.kart.topup3")],
               },
               {
-                icon: Smartphone, label: "App",
-                lines: ["Istanbulkart app", "Top up via NFC", "Check balance"],
+                icon: Smartphone, label: t("tr.kart.app"),
+                lines: [t("tr.kart.app1"), t("tr.kart.app2"), t("tr.kart.app3")],
               },
             ].map((block) => (
               <div key={block.label} style={{
@@ -247,9 +249,9 @@ export default function TransportSheet({ onClose }) {
           {/* Quick fact bar */}
           <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
             {[
-              { l: "Card price", v: "₺150" },
-              { l: "Single ride", v: "~₺20" },
-              { l: "Transfer", v: "Discounted" },
+              { l: t("tr.fact.price"), v: "₺150" },
+              { l: t("tr.fact.single"), v: "~₺20" },
+              { l: t("tr.fact.transfer"), v: t("tr.fact.transferV") },
             ].map((f) => (
               <div key={f.l} style={{
                 flex: 1, borderRadius: 14, background: C.dark, padding: "10px 8px",
@@ -264,28 +266,28 @@ export default function TransportSheet({ onClose }) {
           {/* ════════════════════════════
              4. AIRPORT → CITY (öneri bazlı)
           ════════════════════════════ */}
-          <Title>Airport → City center</Title>
+          <Title>{t("transport.airportToCity")}</Title>
           {[
             {
-              badge: "Best value", tone: C.okSoft, ac: C.ok,
-              icon: Bus, name: "Havaist Bus",
-              route: "IST → Taksim / Kadıköy / Sultanahmet",
-              time: "~60 min", price: "€12",
-              note: "Every 30 min, 24/7. Most popular tourist option.",
+              badge: t("tr.air.bus.badge"), tone: C.okSoft, ac: C.ok,
+              icon: Bus, name: t("tr.air.bus.name"),
+              route: t("tr.air.bus.route"),
+              time: t("tr.air.bus.time"), price: "€12",
+              note: t("tr.air.bus.note"),
             },
             {
-              badge: "Cheapest", tone: C.blueSoft, ac: C.blue,
-              icon: Train, name: "Metro M11",
-              route: "IST → Gayrettepe (connect to M2)",
-              time: "~35 min", price: "~€1",
-              note: "Fast but requires a metro transfer to reach hotels.",
+              badge: t("tr.air.metro.badge"), tone: C.blueSoft, ac: C.blue,
+              icon: Train, name: t("tr.air.metro.name"),
+              route: t("tr.air.metro.route"),
+              time: t("tr.air.metro.time"), price: "~€1",
+              note: t("tr.air.metro.note"),
             },
             {
-              badge: "Most comfortable", tone: C.warnSoft, ac: C.warn,
-              icon: MapPin, name: "Private Transfer",
-              route: "Door-to-door, meet at arrivals",
-              time: "~45 min", price: "€35–45",
-              note: "Best for late arrivals or groups with luggage.",
+              badge: t("tr.air.private.badge"), tone: C.warnSoft, ac: C.warn,
+              icon: MapPin, name: t("tr.air.private.name"),
+              route: t("tr.air.private.route"),
+              time: t("tr.air.private.time"), price: "€35–45",
+              note: t("tr.air.private.note"),
             },
           ].map((opt) => (
             <div key={opt.name} style={{
@@ -324,15 +326,15 @@ export default function TransportSheet({ onClose }) {
              5. TIPS
           ════════════════════════════ */}
           <Sec bg={C.warnSoft}>
-            <div style={{ fontSize: 13, fontWeight: 700, color: C.warn, marginBottom: 8 }}>💡 Transport tips</div>
+            <div style={{ fontSize: 13, fontWeight: 700, color: C.warn, marginBottom: 8 }}>💡 {t("transport.tips")}</div>
             {[
-              "Buy Istanbulkart at the airport before leaving",
-              "Top up ₺100–150 for a 3-day trip",
-              "Transfers within 2 hours get a discount",
-              "Tram T1 covers most tourist spots",
-              "Ferries are the most scenic transport",
-              "Use Moovit or Google Maps for live routes",
-              "Taxi: always use BiTaksi app — never hail on the street",
+              t("tr.tip1"),
+              t("tr.tip2"),
+              t("tr.tip3"),
+              t("tr.tip4"),
+              t("tr.tip5"),
+              t("tr.tip6"),
+              t("tr.tip7"),
             ].map((tip, i) => (
               <div key={i} style={{ display: "flex", gap: 6, padding: "3px 0", fontSize: 12, color: C.inkSoft }}>
                 <span style={{ color: C.warn }}>→</span>{tip}
@@ -346,13 +348,13 @@ export default function TransportSheet({ onClose }) {
           <Sec bg="linear-gradient(135deg, #FFF1F2, #FFF)">
             <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 8 }}>
               <Info size={14} color="#E11D48" />
-              <span style={{ fontSize: 13, fontWeight: 700, color: "#E11D48" }}>Avoid these mistakes</span>
+              <span style={{ fontSize: 13, fontWeight: 700, color: "#E11D48" }}>{t("tr.avoidTitle")}</span>
             </div>
             {[
-              "Hailing random taxis — use BiTaksi app instead",
-              "Not topping up enough — machines aren't everywhere",
-              "Taking tram at rush hour (08:00–09:30) — very packed",
-              "Missing last ferry — check schedules in advance",
+              t("tr.avoid1"),
+              t("tr.avoid2"),
+              t("tr.avoid3"),
+              t("tr.avoid4"),
             ].map((m, i) => (
               <div key={i} style={{ display: "flex", gap: 6, padding: "3px 0", fontSize: 12, color: C.inkSoft }}>
                 <span>⚠️</span>{m}
@@ -369,8 +371,8 @@ export default function TransportSheet({ onClose }) {
         }}>
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             <div style={{ flex: 1 }}>
-              <div style={{ fontSize: 10, color: C.ok, fontWeight: 600 }}>♾️ Unlimited metro, tram, bus, ferry</div>
-              <div style={{ fontSize: 10, color: C.inkMute, marginTop: 1 }}>Unlimited Travel Card</div>
+              <div style={{ fontSize: 10, color: C.ok, fontWeight: 600 }}>{t("tr.cta.benefit")}</div>
+              <div style={{ fontSize: 10, color: C.inkMute, marginTop: 1 }}>{t("tr.cta.label")}</div>
               <div style={{ fontSize: 24, fontWeight: 800, letterSpacing: "-0.03em" }}>₺150</div>
             </div>
             <a
@@ -386,7 +388,7 @@ export default function TransportSheet({ onClose }) {
                 cursor: "pointer",
               }}
             >
-              <CreditCard size={14} /> Get Unlimited Pass →
+              <CreditCard size={14} /> {t("transport.getPass")} →
             </a>
           </div>
         </div>

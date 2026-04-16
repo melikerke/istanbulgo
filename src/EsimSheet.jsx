@@ -7,6 +7,7 @@ import {
   ArrowLeft, Wifi, Smartphone, Check, X, Globe, Zap,
   Shield, Clock, ChevronRight, Signal, MapPin
 } from "lucide-react";
+import { useLanguage } from "./LanguageContext";
 
 const C = {
   ink: "#0F172A", inkSoft: "#475569", inkMute: "#94A3B8",
@@ -38,6 +39,7 @@ const PROVIDER = {
 };
 
 export default function EsimSheet({ onClose, onBook }) {
+  const { t } = useLanguage();
   const [vis, setVis] = useState(false);
   const [compatOpen, setCompatOpen] = useState(false);
 
@@ -55,7 +57,7 @@ export default function EsimSheet({ onClose, onBook }) {
           <div style={{ position: "relative" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
               <button onClick={handleClose} style={{ width: 40, height: 40, borderRadius: 16, border: "none", background: "rgba(255,255,255,0.1)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}><ArrowLeft size={16} color="white" /></button>
-              <div style={{ fontSize: 10, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.12em", color: "rgba(255,255,255,0.5)" }}>Stay connected</div>
+              <div style={{ fontSize: 10, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.12em", color: "rgba(255,255,255,0.5)" }}>{t("menu.esimDataSub")}</div>
             </div>
             <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
               <div style={{ width: 56, height: 56, borderRadius: 18, background: "rgba(255,255,255,0.1)", display: "flex", alignItems: "center", justifyContent: "center" }}><Wifi size={28} color="#A78BFA" /></div>
@@ -97,19 +99,19 @@ export default function EsimSheet({ onClose, onBook }) {
           <div onClick={() => setCompatOpen(true)} style={{ borderRadius: 20, background: C.purpleSoft, padding: 16, marginBottom: 12, display: "flex", alignItems: "center", gap: 12, cursor: "pointer" }}>
             <Smartphone size={22} color={C.purple} />
             <div style={{ flex: 1 }}>
-              <div style={{ fontSize: 14, fontWeight: 700, color: C.ink }}>Is my phone compatible?</div>
-              <div style={{ fontSize: 12, color: C.inkSoft, marginTop: 2 }}>Tap to check your device</div>
+              <div style={{ fontSize: 14, fontWeight: 700, color: C.ink }}>{t("esim.compatible")}</div>
+              <div style={{ fontSize: 12, color: C.inkSoft, marginTop: 2 }}>{t("esim.tapCheck")}</div>
             </div>
             <ChevronRight size={16} color={C.purple} />
           </div>
 
           {/* How to install */}
           <div style={{ borderRadius: 20, border: `1px solid ${C.line}`, background: "white", padding: 16, marginBottom: 12 }}>
-            <div style={{ fontSize: 14, fontWeight: 800, marginBottom: 10 }}>How to set up</div>
+            <div style={{ fontSize: 14, fontWeight: 800, marginBottom: 10 }}>{t("esim.howSetup")}</div>
             {[
-              { step: "1", text: "Buy your eSIM plan online" },
-              { step: "2", text: "Scan the QR code from your email" },
-              { step: "3", text: "Activate when you land in Turkey" },
+              { step: "1", text: t("esim.step1") },
+              { step: "2", text: t("esim.step2") },
+              { step: "3", text: t("esim.step3") },
             ].map(s => (
               <div key={s.step} style={{ display: "flex", gap: 10, padding: "6px 0", alignItems: "center" }}>
                 <div style={{ width: 28, height: 28, borderRadius: 10, background: C.purpleSoft, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 800, color: C.purple, flexShrink: 0 }}>{s.step}</div>
@@ -125,7 +127,7 @@ export default function EsimSheet({ onClose, onBook }) {
               <div style={{ flex: 1 }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                   <span style={{ fontSize: 16, fontWeight: 800 }}>{PROVIDER.name}</span>
-                  <span style={{ fontSize: 9, fontWeight: 700, background: C.okSoft, color: C.ok, padding: "2px 6px", borderRadius: 4 }}>Recommended</span>
+                  <span style={{ fontSize: 9, fontWeight: 700, background: C.okSoft, color: C.ok, padding: "2px 6px", borderRadius: 4 }}>{t("esim.recommended")}</span>
                 </div>
                 <div style={{ fontSize: 12, color: C.inkMute, marginTop: 2 }}>{PROVIDER.data} · {PROVIDER.days}</div>
               </div>
@@ -142,7 +144,7 @@ export default function EsimSheet({ onClose, onBook }) {
 
           {/* Tips */}
           <div style={{ borderRadius: 20, background: C.warnSoft, padding: 16, marginBottom: 12 }}>
-            <div style={{ fontSize: 13, fontWeight: 700, color: C.warn, marginBottom: 8 }}>💡 Good to know</div>
+            <div style={{ fontSize: 13, fontWeight: 700, color: C.warn, marginBottom: 8 }}>💡 {t("esim.goodToKnow")}</div>
             {["Install your eSIM before the flight — you need WiFi for setup", "Your regular SIM stays active for calls & texts", "Airport WiFi works but is slow — don't rely on it for setup", "Most plans auto-activate when you connect to a Turkish network"].map((tip, i) => (
               <div key={i} style={{ display: "flex", gap: 6, padding: "3px 0", fontSize: 12, color: C.inkSoft }}>
                 <span style={{ color: C.warn }}>→</span>{tip}
@@ -155,11 +157,11 @@ export default function EsimSheet({ onClose, onBook }) {
         <div style={{ flexShrink: 0, borderTop: `1px solid ${C.line}`, background: "rgba(255,255,255,0.97)", backdropFilter: "blur(10px)", padding: "12px 16px 18px" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             <div style={{ flex: 1 }}>
-              <div style={{ fontSize: 10, color: C.inkMute }}>From</div>
+              <div style={{ fontSize: 10, color: C.inkMute }}>{t("card.from")}</div>
               <div style={{ fontSize: 24, fontWeight: 800, letterSpacing: "-0.03em" }}>€4.99</div>
             </div>
             <a href="https://www.esim-turkey.com" target="_blank" rel="noopener noreferrer" style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 6, padding: "12px 20px", borderRadius: 14, background: `linear-gradient(135deg, ${C.purple}, #4C1D95)`, color: "white", fontSize: 13, fontWeight: 700, textDecoration: "none", boxShadow: "0 4px 14px rgba(109,40,217,0.3)", cursor: "pointer" }}>
-              <Wifi size={14} /> Get eSIM →
+              <Wifi size={14} /> {t("esim.getEsim")} →
             </a>
           </div>
         </div>

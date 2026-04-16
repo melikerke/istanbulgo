@@ -11,11 +11,13 @@
 
 import { useState, useEffect } from "react";
 import { ArrowLeft, ExternalLink, Shield, Check } from "lucide-react";
+import { useLanguage } from "./LanguageContext";
 
 const fontDisplay = "'Plus Jakarta Sans', system-ui, sans-serif";
 const fontBody = "'Inter', system-ui, sans-serif";
 
 export default function BookingOverlay({ booking, onClose }) {
+  const { t } = useLanguage();
   const [phase, setPhase] = useState("loading"); // "loading" | "redirected"
   const [visible, setVisible] = useState(false);
 
@@ -112,7 +114,7 @@ export default function BookingOverlay({ booking, onClose }) {
                 marginBottom: 8,
               }}
             >
-              Taking you to our partner...
+              {t("booking.taking")}
             </div>
 
             <div style={{ fontSize: 13, color: "rgba(255,255,255,0.5)", marginBottom: 6 }}>
@@ -132,10 +134,10 @@ export default function BookingOverlay({ booking, onClose }) {
               }}
             >
               <span style={{ display: "flex", alignItems: "center", gap: 3 }}>
-                <Shield size={11} /> Secure booking
+                <Shield size={11} /> {t("booking.secure")}
               </span>
               <span>·</span>
-              <span>Free cancellation</span>
+              <span>{t("booking.freeCancel")}</span>
             </div>
 
             {/* Pulse animation */}
@@ -176,13 +178,11 @@ export default function BookingOverlay({ booking, onClose }) {
                 marginBottom: 8,
               }}
             >
-              Booking page is open
+              {t("booking.opened")}
             </div>
 
             <div style={{ fontSize: 13, color: "rgba(255,255,255,0.5)", lineHeight: 1.6 }}>
-              Complete your booking in the new tab.
-              <br />
-              Come back here when you're done!
+              {t("booking.completeInTab")}
             </div>
 
             {/* Geri dön butonu */}
@@ -204,7 +204,7 @@ export default function BookingOverlay({ booking, onClose }) {
               }}
             >
               <ArrowLeft size={14} />
-              Back to IstanbulGo
+              {t("booking.backToApp")}
             </div>
 
             {/* Tekrar açma linki */}
@@ -217,7 +217,7 @@ export default function BookingOverlay({ booking, onClose }) {
                 cursor: "pointer",
               }}
             >
-              Didn't open? Tap to try again
+              {t("booking.tryAgain")}
             </div>
           </>
         )}

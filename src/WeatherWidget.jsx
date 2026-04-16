@@ -6,6 +6,7 @@
 
 import { useState, useEffect } from "react";
 import { MapPin, Droplets, Wind, Thermometer } from "lucide-react";
+import { useLanguage } from "./LanguageContext";
 
 const C = {
   ink: "#0F172A", inkSoft: "#475569", inkMute: "#94A3B8",
@@ -48,13 +49,14 @@ const getWindDir = (deg) => {
   return dirs[Math.round(deg / 45) % 8];
 };
 
-const getDayName = (dateStr, idx) => {
-  if (idx === 0) return "Today";
-  if (idx === 1) return "Tomorrow";
-  return new Date(dateStr).toLocaleDateString("en-US", { weekday: "short" });
+const getDayName = (dateStr, idx, t, lang) => {
+  if (idx === 0) return t("weather.today");
+  if (idx === 1) return t("weather.tomorrow");
+  return new Date(dateStr).toLocaleDateString(lang === "ar" ? "ar-SA" : lang, { weekday: "short" });
 };
 
 export default function WeatherWidget() {
+  const { t, lang } = useLanguage();
   const [data, setData] = useState(null);
   const [error, setError] = useState(false);
 
@@ -73,7 +75,7 @@ export default function WeatherWidget() {
         borderRadius: 22, background: C.soft, border: `1px solid ${C.line}`,
         padding: 24, textAlign: "center", color: C.inkMute, fontSize: 13,
       }}>
-        Weather data is temporarily unavailable.
+        {t("weather.unavailable")}
       </div>
     );
   }
@@ -84,7 +86,7 @@ export default function WeatherWidget() {
         borderRadius: 22, background: C.soft, border: `1px solid ${C.line}`,
         padding: 40, textAlign: "center", color: C.inkMute, fontSize: 13,
       }}>
-        Loading weather…
+        {t("weather.loading")}
       </div>
     );
   }
@@ -135,7 +137,7 @@ export default function WeatherWidget() {
             </div>
             <div style={{ fontSize: 14, color: "rgba(255,255,255,0.85)", marginTop: 4 }}>{wmo[1]}</div>
             <div style={{ fontSize: 11, color: "rgba(255,255,255,0.55)", marginTop: 2 }}>
-              Feels like {Math.round(cur.apparent_temperature)}°C
+              {t("weather.feelsLike")} {Math.round(cur.apparent_temperature)}°C
             </div>
           </div>
         </div>
@@ -152,7 +154,7 @@ export default function WeatherWidget() {
         }}>
           <Droplets size={16} color={C.blue} style={{ margin: "0 auto 4px" }} />
           <div style={{ fontSize: 16, fontWeight: 800, color: C.ink }}>{cur.relative_humidity_2m}%</div>
-          <div style={{ fontSize: 9, fontWeight: 700, color: C.inkMute, textTransform: "uppercase", letterSpacing: "0.06em", marginTop: 2 }}>Humidity</div>
+          <div style={{ fontSize: 9, fontWeight: 700, color: C.inkMute, textTransform: "uppercase", letterSpacing: "0.06em", marginTop: 2 }}>{t("weather.humidity")}</div>
         </div>
 
         <div style={{
@@ -174,7 +176,7 @@ export default function WeatherWidget() {
           <div style={{ fontSize: 16, fontWeight: 800, color: C.ink }}>
             {Math.round(daily.temperature_2m_max[0])}° / {Math.round(daily.temperature_2m_min[0])}°
           </div>
-          <div style={{ fontSize: 9, fontWeight: 700, color: C.inkMute, textTransform: "uppercase", letterSpacing: "0.06em", marginTop: 2 }}>High / Low</div>
+          <div style={{ fontSize: 9, fontWeight: 700, color: C.inkMute, textTransform: "uppercase", letterSpacing: "0.06em", marginTop: 2 }}>{t("weather.highLow")}</div>
         </div>
       </div>
 
@@ -188,7 +190,7 @@ export default function WeatherWidget() {
           textTransform: "uppercase", letterSpacing: "0.08em",
           marginBottom: 12, paddingLeft: 12,
         }}>
-          5-Day Forecast
+          {t("weather.forecast")}
         </div>
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr 1fr" }}>
           {daily.time.slice(0, 5).map((dateStr, i) => {
@@ -199,7 +201,7 @@ export default function WeatherWidget() {
                   fontSize: 10, fontWeight: 700, color: i === 0 ? C.blue : C.inkMute,
                   textTransform: "uppercase", letterSpacing: "0.04em", marginBottom: 6,
                 }}>
-                  {getDayName(dateStr, i)}
+                  {getDayName(dateStr, i, t, lang)}
                 </div>
                 <div style={{ fontSize: 24, marginBottom: 4 }}>{dayWmo[0]}</div>
                 <div style={{ fontSize: 12, fontWeight: 700, color: C.ink }}>

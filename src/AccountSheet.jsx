@@ -18,6 +18,7 @@ import {
   X, Mail, Lock, User, Crown, ChevronRight, LogOut,
   Star, Sparkles, Eye, Globe, Zap, Camera, Gift, Shield
 } from "lucide-react";
+import { useLanguage } from "./LanguageContext";
 
 // ── Renkler ──
 const colors = {
@@ -39,6 +40,7 @@ const fontDisplay = "'Plus Jakarta Sans', system-ui, sans-serif";
 const fontBody = "'Inter', system-ui, sans-serif";
 
 export default function AccountSheet({ onClose, user, onLogin, onLogout, onUpgrade, isPremium, onNavigate }) {
+  const { t } = useLanguage();
   // ── Animasyon ──
   const [visible, setVisible] = useState(false);
   const [mode, setMode] = useState("login"); // "login" | "signup" | "profile"
@@ -259,7 +261,7 @@ export default function AccountSheet({ onClose, user, onLogin, onLogout, onUpgra
                   }}
                 >
                   <Crown size={12} />
-                  Premium Member
+                  {t("account.premiumMember")}
                 </div>
               ) : (
                 <div
@@ -276,7 +278,7 @@ export default function AccountSheet({ onClose, user, onLogin, onLogout, onUpgra
                     fontWeight: 600,
                   }}
                 >
-                  Free Plan
+                  {t("account.freePlan")}
                 </div>
               )}
             </div>
@@ -313,7 +315,7 @@ export default function AccountSheet({ onClose, user, onLogin, onLogout, onUpgra
                     <Crown size={20} color={colors.gold} />
                   </div>
                   <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: 14, fontWeight: 700 }}>Upgrade to Premium</div>
+                    <div style={{ fontSize: 14, fontWeight: 700 }}>{t("menu.upgradePremium")}</div>
                     <div style={{ fontSize: 12, color: "rgba(255,255,255,0.5)", marginTop: 2 }}>
                       AI planner, offline mode & more · €4.99 one-time
                     </div>
@@ -374,7 +376,7 @@ export default function AccountSheet({ onClose, user, onLogin, onLogout, onUpgra
               }}
             >
               <LogOut size={14} />
-              Sign out
+              {t("account.signOut")}
             </div>
           </div>
         )}
@@ -408,12 +410,12 @@ export default function AccountSheet({ onClose, user, onLogin, onLogout, onUpgra
                   letterSpacing: "-0.03em",
                 }}
               >
-                {mode === "login" ? "Welcome back" : "Create account"}
+                {mode === "login" ? t("account.welcomeBack") : t("account.createAccount")}
               </div>
               <div style={{ fontSize: 13, color: colors.inkMute, marginTop: 6 }}>
                 {mode === "login"
-                  ? "Sign in to access your saved trips"
-                  : "Free account — save favorites & sync devices"}
+                  ? t("account.signInSub")
+                  : t("account.signUpSub")}
               </div>
             </div>
 
@@ -436,7 +438,7 @@ export default function AccountSheet({ onClose, user, onLogin, onLogout, onUpgra
               }}
             >
               <Globe size={16} />
-              Continue with Google
+              {t("account.google")}
             </div>
 
             {/* Ayırıcı */}
@@ -470,7 +472,7 @@ export default function AccountSheet({ onClose, user, onLogin, onLogout, onUpgra
                   <User size={16} color={colors.inkMute} />
                   <input
                     type="text"
-                    placeholder="Your name"
+                    placeholder={t("account.name")}
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     style={{
@@ -503,7 +505,7 @@ export default function AccountSheet({ onClose, user, onLogin, onLogout, onUpgra
                 <Mail size={16} color={colors.inkMute} />
                 <input
                   type="email"
-                  placeholder="Email address"
+                  placeholder={t("account.email")}
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   style={{
@@ -535,7 +537,7 @@ export default function AccountSheet({ onClose, user, onLogin, onLogout, onUpgra
                 <Lock size={16} color={colors.inkMute} />
                 <input
                   type="password"
-                  placeholder="Password"
+                  placeholder={t("account.password")}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   style={{
@@ -587,29 +589,29 @@ export default function AccountSheet({ onClose, user, onLogin, onLogout, onUpgra
                 boxShadow: "0 4px 14px rgba(29, 78, 216, 0.3)",
               }}
             >
-              {mode === "login" ? "Sign in" : "Create account"}
+              {mode === "login" ? t("account.signIn") : t("account.create")}
             </div>
 
             {/* Mod değiştirme */}
             <div style={{ textAlign: "center", marginTop: 16, fontSize: 13, color: colors.inkMute }}>
               {mode === "login" ? (
                 <>
-                  Don't have an account?{" "}
+                  {t("account.noAccount")}{" "}
                   <span
                     onClick={() => setMode("signup")}
                     style={{ color: colors.primary, fontWeight: 600, cursor: "pointer" }}
                   >
-                    Sign up
+                    {t("account.signUp")}
                   </span>
                 </>
               ) : (
                 <>
-                  Already have an account?{" "}
+                  {t("account.hasAccount")}{" "}
                   <span
                     onClick={() => setMode("login")}
                     style={{ color: colors.primary, fontWeight: 600, cursor: "pointer" }}
                   >
-                    Sign in
+                    {t("account.signIn")}
                   </span>
                 </>
               )}
@@ -626,7 +628,7 @@ export default function AccountSheet({ onClose, user, onLogin, onLogout, onUpgra
                 cursor: "pointer",
               }}
             >
-              Continue without account
+              {t("account.continueWithout")}
             </div>
           </div>
         )}

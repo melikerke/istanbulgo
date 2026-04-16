@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { ArrowLeft, Heart, Ticket, Star, Info, ChevronRight, Landmark, TramFront, Shirt, ExternalLink, Waves, Music, Eye, Moon, Ship, Sun, Bus, MapPin, UtensilsCrossed, ChefHat, Fish, Clock, Camera, Zap, AlertTriangle, Check, Sparkles, Navigation } from "lucide-react";
+import { useLanguage } from "./LanguageContext";
 
 const C = { ink:"#0F172A", inkSoft:"#475569", inkMute:"#94A3B8", line:"#E2E8F0", soft:"#F8FAFC", blue:"#1D4ED8", blueSoft:"#DBEAFE", ok:"#059669", okSoft:"#D1FAE5", warn:"#D97706", warnSoft:"#FEF3C7", gold:"#C59D5F", goldSoft:"#FBF5EB", dark:"#0B1220", danger:"#E11D48" };
 const fd = "'Plus Jakarta Sans',system-ui,sans-serif";
@@ -32,6 +33,7 @@ const D = {
 };
 
 export default function AttractionSheet({ attraction, allAttractions, onClose, onFav, isFav, onOpenOther, isPremium, onUpgrade, onBook, myTickets = [], onToggleTicket }) {
+  const { t } = useLanguage();
   const [gi, setGi] = useState(0);
   const [vis, setVis] = useState(false);
   const scrollRef = useRef(null);
@@ -41,6 +43,25 @@ export default function AttractionSheet({ attraction, allAttractions, onClose, o
   const gallery = d.gallery || [attraction.img];
   const img = gallery[gi] || gallery[0];
   const nearby = (d.nearby || []).map(id => (allAttractions || []).find(a => a.id === id)).filter(Boolean);
+  // Translation fallback helper — uses translation key if exists, else raw data
+  const aid = attraction.id;
+  const tF = (key, fb) => { const v = t(key); return v !== key ? v : fb; };
+  const td = {
+    whyGo: tF(`att.${aid}.whyGo`, d.whyGo),
+    bestTime: [1,2,3].map(i => tF(`att.${aid}.bestTime${i}`, d.bestTime?.[i-1])).filter(Boolean),
+    skipFree: tF(`att.${aid}.skipFree`, d.skipStrategy?.free),
+    skipPremium: d.skipStrategy?.premium,
+    photo: tF(`att.${aid}.photo`, d.photoSpot?.free),
+    timeQuick: tF(`att.${aid}.timeQuick`, d.timeReality?.quick),
+    timeIdeal: tF(`att.${aid}.timeIdeal`, d.timeReality?.ideal),
+    timeNote: tF(`att.${aid}.timeNote`, d.timeReality?.note),
+    goodToKnow: [1,2,3,4].map(i => tF(`att.${aid}.know${i}`, d.goodToKnow?.[i-1])).filter(Boolean),
+    commonMistakes: [1,2,3,4].map(i => tF(`att.${aid}.miss${i}`, d.commonMistakes?.[i-1])).filter(Boolean),
+    priceGate: tF(`att.${aid}.priceGate`, d.smartPrice?.gate),
+    priceBetter: tF(`att.${aid}.priceBetter`, d.smartPrice?.better),
+    priceWhy: tF(`att.${aid}.priceWhy`, d.smartPrice?.why),
+    combo: tF(`att.${aid}.combo`, d.comboTip),
+  };
   const handleClose = () => { setVis(false); setTimeout(onClose, 250); };
   const handleNearby = (n) => { setGi(0); setVis(false); setTimeout(() => { if (onOpenOther) onOpenOther(n); setTimeout(() => setVis(true), 50); }, 200); };
   const Sec = ({ children, bg = "white" }) => (<div style={{ borderRadius: 20, border: `1px solid ${C.line}`, background: bg, padding: 16, marginBottom: 10 }}>{children}</div>);
@@ -64,55 +85,60 @@ export default function AttractionSheet({ attraction, allAttractions, onClose, o
           <div style={{ position: "absolute", left: 16, bottom: 16, right: 16 }}>
             <div style={{ display: "flex", gap: 6, marginBottom: 8 }}>
               <span style={{ background: "rgba(255,255,255,0.2)", color: "white", padding: "3px 8px", borderRadius: 6, fontSize: 10, fontWeight: 700 }}>{attraction.badge}</span>
-              {attraction.skip && <span style={{ background: "rgba(5,150,105,0.8)", color: "white", padding: "3px 8px", borderRadius: 6, fontSize: 10, fontWeight: 700 }}>⚡ Skip line</span>}
+              {attraction.skip && <span style={{ background: "rgba(5,150,105,0.8)", color: "white", padding: "3px 8px", borderRadius: 6, fontSize: 10, fontWeight: 700 }}>⚡ {t("att.skipLine")}</span>}
             </div>
             <div style={{ fontSize: 26, fontWeight: 800, letterSpacing: "-0.04em", color: "white", fontFamily: fd }}>{attraction.title}</div>
-            <div style={{ marginTop: 4, fontSize: 13, color: "rgba(255,255,255,0.75)", lineHeight: 1.5 }}>{attraction.teaser}</div>
+            <div style={{ marginTop: 4, fontSize: 13, color: "rgba(255,255,255,0.75)", lineHeight: 1.5 }}>{t(`att.${attraction.id}.teaser`) !== `att.${attraction.id}.teaser` ? t(`att.${attraction.id}.teaser`) : attraction.teaser}</div>
           </div>
         </div>
         {/* SCROLLABLE */}
         <div ref={scrollRef} style={{ flex: 1, overflowY: "auto", padding: "14px 16px 20px", background: "linear-gradient(180deg,#F8FBFF 0%,#F5F7FB 30%)" }}>
           {gallery.length > 1 && <div style={{ display: "flex", gap: 6, overflowX: "auto", paddingBottom: 6, marginBottom: 10 }}>{gallery.map((im, i) => <button key={i} onClick={() => setGi(i)} style={{ width: 52, height: 52, borderRadius: 12, overflow: "hidden", flexShrink: 0, padding: 0, cursor: "pointer", border: gi === i ? `2px solid ${C.blue}` : `1px solid ${C.line}`, background: "white" }}><img src={im} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /></button>)}</div>}
           {/* 2. WHY */}
-          {d.whyGo && <Sec><ST icon={Landmark}>Why this place</ST><div style={{ fontSize: 13, lineHeight: 1.7, color: C.inkSoft }}>{d.whyGo}</div></Sec>}
+          {td.whyGo && <Sec><ST icon={Landmark}>{t("att.whyPlace")}</ST><div style={{ fontSize: 13, lineHeight: 1.7, color: C.inkSoft }}>{td.whyGo}</div></Sec>}
           {/* 3. FACTS */}
-          {d.facts && <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 10 }}>{d.facts.map(f => <div key={f.l} style={{ borderRadius: 14, border: `1px solid ${C.line}`, background: "white", padding: "10px 12px" }}><div style={{ fontSize: 10, color: C.inkMute, textTransform: "uppercase", letterSpacing: "0.06em" }}>{f.l}</div><div style={{ marginTop: 3, fontSize: 14, fontWeight: 800 }}>{f.v}</div></div>)}</div>}
+          {d.facts && <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 10 }}>{d.facts.map(f => {
+            const labelMap = {From:"att.factFrom",Duration:"att.factDuration",Area:"att.factArea",Rating:"att.factRating",Entry:"att.factEntry"};
+            const labelKey = labelMap[f.l];
+            const labelText = labelKey ? t(labelKey) : f.l;
+            return <div key={f.l} style={{ borderRadius: 14, border: `1px solid ${C.line}`, background: "white", padding: "10px 12px" }}><div style={{ fontSize: 10, color: C.inkMute, textTransform: "uppercase", letterSpacing: "0.06em" }}>{labelText}</div><div style={{ marginTop: 3, fontSize: 14, fontWeight: 800 }}>{f.v}</div></div>;
+          })}</div>}
           {/* 4. BEST TIME */}
-          {d.bestTime && <Sec bg="linear-gradient(135deg,#EFF6FF,#F8FAFC)"><ST icon={Clock}>Best time to go</ST>{d.bestTime.map((t, i) => <Bul key={i} icon={i === 0 ? "✅" : i === d.bestTime.length - 1 ? "🚫" : "💡"}>{t}</Bul>)}</Sec>}
+          {td.bestTime.length > 0 && <Sec bg="linear-gradient(135deg,#EFF6FF,#F8FAFC)"><ST icon={Clock}>{t("att.bestTime")}</ST>{td.bestTime.map((tx, i) => <Bul key={i} icon={i === 0 ? "✅" : i === td.bestTime.length - 1 ? "🚫" : "💡"}>{tx}</Bul>)}</Sec>}
           {/* 5. SKIP STRATEGY */}
-          {d.skipStrategy && <Sec><ST icon={Zap}>Skip-the-line strategy</ST><div style={{ fontSize: 13, lineHeight: 1.6, color: C.inkSoft, marginBottom: 8 }}>{d.skipStrategy.free}</div>{!isPremium && d.skipStrategy.premium && <div onClick={() => onUpgrade && onUpgrade()} style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 10px", borderRadius: 10, background: C.goldSoft, cursor: "pointer" }}><span style={{ fontSize: 12 }}>✨</span><span style={{ fontSize: 11, color: C.gold, fontWeight: 600, flex: 1 }}>Insider strategy: {d.skipStrategy.premium}</span><span style={{ fontSize: 10, color: C.gold }}>→</span></div>}</Sec>}
+          {td.skipFree && <Sec><ST icon={Zap}>{t("att.skipStrategy")}</ST><div style={{ fontSize: 13, lineHeight: 1.6, color: C.inkSoft, marginBottom: 8 }}>{td.skipFree}</div>{!isPremium && td.skipPremium && <div onClick={() => onUpgrade && onUpgrade()} style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 10px", borderRadius: 10, background: C.goldSoft, cursor: "pointer" }}><span style={{ fontSize: 12 }}>✨</span><span style={{ fontSize: 11, color: C.gold, fontWeight: 600, flex: 1 }}>{t("att.insiderStrategy")}: {td.skipPremium}</span><span style={{ fontSize: 10, color: C.gold }}>→</span></div>}</Sec>}
           {/* 6. PHOTO */}
-          {d.photoSpot && <Sec><ST icon={Camera}>Photo spot</ST><div style={{ fontSize: 13, lineHeight: 1.6, color: C.inkSoft }}>{d.photoSpot.free}</div></Sec>}
+          {td.photo && <Sec><ST icon={Camera}>{t("att.photoSpot")}</ST><div style={{ fontSize: 13, lineHeight: 1.6, color: C.inkSoft }}>{td.photo}</div></Sec>}
           {/* 8. TIME REALITY */}
-          {d.timeReality && <Sec><ST icon={Clock}>How much time do you need?</ST><div style={{ display: "flex", gap: 8, marginBottom: 8 }}><div style={{ flex: 1, borderRadius: 12, background: C.warnSoft, padding: "8px 10px" }}><div style={{ fontSize: 10, color: C.warn, fontWeight: 600 }}>⚡ Quick</div><div style={{ fontSize: 12, fontWeight: 700, marginTop: 2 }}>{d.timeReality.quick}</div></div><div style={{ flex: 1, borderRadius: 12, background: C.okSoft, padding: "8px 10px" }}><div style={{ fontSize: 10, color: C.ok, fontWeight: 600 }}>🧠 Ideal</div><div style={{ fontSize: 12, fontWeight: 700, marginTop: 2 }}>{d.timeReality.ideal}</div></div></div><div style={{ fontSize: 12, color: C.inkSoft, fontStyle: "italic" }}>{d.timeReality.note}</div></Sec>}
+          {(td.timeQuick || td.timeIdeal) && <Sec><ST icon={Clock}>{t("att.timeNeeded")}</ST><div style={{ display: "flex", gap: 8, marginBottom: 8 }}><div style={{ flex: 1, borderRadius: 12, background: C.warnSoft, padding: "8px 10px" }}><div style={{ fontSize: 10, color: C.warn, fontWeight: 600 }}>⚡ {t("att.quick")}</div><div style={{ fontSize: 12, fontWeight: 700, marginTop: 2 }}>{td.timeQuick}</div></div><div style={{ flex: 1, borderRadius: 12, background: C.okSoft, padding: "8px 10px" }}><div style={{ fontSize: 10, color: C.ok, fontWeight: 600 }}>🧠 {t("att.ideal")}</div><div style={{ fontSize: 12, fontWeight: 700, marginTop: 2 }}>{td.timeIdeal}</div></div></div>{td.timeNote && <div style={{ fontSize: 12, color: C.inkSoft, fontStyle: "italic" }}>{td.timeNote}</div>}</Sec>}
           {/* 9. GOOD TO KNOW */}
-          {d.goodToKnow && <Sec><ST icon={Info}>Good to know</ST>{d.goodToKnow.map((t, i) => <Bul key={i} icon="•">{t}</Bul>)}</Sec>}
+          {td.goodToKnow.length > 0 && <Sec><ST icon={Info}>{t("att.goodToKnow")}</ST>{td.goodToKnow.map((tx, i) => <Bul key={i} icon="•">{tx}</Bul>)}</Sec>}
           {/* BONUS: COMMON MISTAKES */}
-          {d.commonMistakes && <Sec bg="linear-gradient(135deg,#FEF2F2,#FFF)"><ST icon={AlertTriangle}>Common mistakes</ST>{d.commonMistakes.map((m, i) => <Bul key={i} icon="❌">{m}</Bul>)}</Sec>}
+          {td.commonMistakes.length > 0 && <Sec bg="linear-gradient(135deg,#FEF2F2,#FFF)"><ST icon={AlertTriangle}>{t("att.commonMistakes")}</ST>{td.commonMistakes.map((m, i) => <Bul key={i} icon="❌">{m}</Bul>)}</Sec>}
           {/* 10. SMART PRICE */}
-          {d.smartPrice && <Sec><ST icon={Ticket}>Smart ticket choice</ST><div style={{ display: "flex", gap: 8, marginBottom: 8 }}><div style={{ flex: 1, borderRadius: 12, border: `1px solid ${C.line}`, padding: 10, textAlign: "center" }}><div style={{ fontSize: 10, color: C.inkMute }}>Gate ticket</div><div style={{ fontSize: 14, fontWeight: 800, marginTop: 2 }}>{d.smartPrice.gate}</div></div><div style={{ flex: 1, borderRadius: 12, background: C.blueSoft, padding: 10, textAlign: "center" }}><div style={{ fontSize: 10, color: C.blue, fontWeight: 600 }}>Better option</div><div style={{ fontSize: 14, fontWeight: 800, marginTop: 2, color: C.blue }}>{d.smartPrice.better}</div></div></div><div style={{ fontSize: 12, color: C.inkSoft }}>💡 {d.smartPrice.why}</div></Sec>}
+          {(td.priceGate || td.priceBetter) && <Sec><ST icon={Ticket}>{t("att.smartTicket")}</ST><div style={{ display: "flex", gap: 8, marginBottom: 8 }}><div style={{ flex: 1, borderRadius: 12, border: `1px solid ${C.line}`, padding: 10, textAlign: "center" }}><div style={{ fontSize: 10, color: C.inkMute }}>{t("att.gateTicket")}</div><div style={{ fontSize: 14, fontWeight: 800, marginTop: 2 }}>{td.priceGate}</div></div><div style={{ flex: 1, borderRadius: 12, background: C.blueSoft, padding: 10, textAlign: "center" }}><div style={{ fontSize: 10, color: C.blue, fontWeight: 600 }}>{t("att.betterOption")}</div><div style={{ fontSize: 14, fontWeight: 800, marginTop: 2, color: C.blue }}>{td.priceBetter}</div></div></div>{td.priceWhy && <div style={{ fontSize: 12, color: C.inkSoft }}>💡 {td.priceWhy}</div>}</Sec>}
           {/* 7. NEARBY */}
-          {nearby.length > 0 && <Sec><ST icon={Navigation}>Perfect combo route</ST>{d.comboTip && <div style={{ fontSize: 12, color: C.blue, fontWeight: 600, marginBottom: 10 }}>💡 {d.comboTip}</div>}{nearby.map(n => <div key={n.id} onClick={() => handleNearby(n)} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 0", borderTop: `1px solid ${C.line}`, cursor: "pointer" }}><img src={n.img} alt={n.title} style={{ width: 44, height: 44, borderRadius: 12, objectFit: "cover" }} /><div style={{ flex: 1 }}><div style={{ fontSize: 13, fontWeight: 700 }}>{n.title}</div><div style={{ fontSize: 11, color: C.inkMute }}>{n.cat} · €{n.price}</div></div><ChevronRight size={14} color={C.inkMute} /></div>)}</Sec>}
+          {nearby.length > 0 && <Sec><ST icon={Navigation}>{t("att.comboRoute")}</ST>{td.combo && <div style={{ fontSize: 12, color: C.blue, fontWeight: 600, marginBottom: 10 }}>💡 {td.combo}</div>}{nearby.map(n => <div key={n.id} onClick={() => handleNearby(n)} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 0", borderTop: `1px solid ${C.line}`, cursor: "pointer" }}><img src={n.img} alt={n.title} style={{ width: 44, height: 44, borderRadius: 12, objectFit: "cover" }} /><div style={{ flex: 1 }}><div style={{ fontSize: 13, fontWeight: 700 }}>{n.title}</div><div style={{ fontSize: 11, color: C.inkMute }}>{n.cat} · €{n.price}</div></div><ChevronRight size={14} color={C.inkMute} /></div>)}</Sec>}
           {/* 11. PREMIUM BAIT */}
-          {!isPremium && <div onClick={() => onUpgrade && onUpgrade()} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 14px", borderRadius: 14, background: C.soft, border: `1px solid ${C.line}`, marginBottom: 10, cursor: "pointer" }}><span style={{ fontSize: 15 }}>✨</span><div style={{ flex: 1, fontSize: 12, color: C.inkSoft }}>Want a full day built around this? <span style={{ fontWeight: 700, color: C.ink }}>Get your personalized route</span></div><span style={{ fontSize: 10, color: C.gold }}>→</span></div>}
+          {!isPremium && <div onClick={() => onUpgrade && onUpgrade()} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 14px", borderRadius: 14, background: C.soft, border: `1px solid ${C.line}`, marginBottom: 10, cursor: "pointer" }}><span style={{ fontSize: 15 }}>✨</span><div style={{ flex: 1, fontSize: 12, color: C.inkSoft }}>{t("att.premiumBait")} <span style={{ fontWeight: 700, color: C.ink }}>{t("att.personalRoute")}</span></div><span style={{ fontSize: 10, color: C.gold }}>→</span></div>}
         </div>
         {/* 12. STICKY CTA */}
         <div style={{ flexShrink: 0, borderTop: `1px solid ${C.line}`, background: "rgba(255,255,255,0.97)", backdropFilter: "blur(10px)", padding: "12px 16px 18px" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             <div style={{ flex: 1 }}>
-              {attraction.price > 0 && !myTickets.includes(attraction.id) && <div style={{ fontSize: 10, color: C.warn, fontWeight: 600, marginBottom: 2 }}>⏳ Sells out in peak season</div>}
-              {myTickets.includes(attraction.id) && <div style={{ fontSize: 10, color: "#10B981", fontWeight: 700, marginBottom: 2, display: "flex", alignItems: "center", gap: 4 }}><Check size={11}/>Ticket marked</div>}
-              <div style={{ fontSize: 10, color: C.inkMute }}>{attraction.price > 0 ? "From" : "Entry"}</div>
-              <div style={{ fontSize: 26, fontWeight: 800, letterSpacing: "-0.03em" }}>{attraction.price > 0 ? `€${attraction.price}` : "Free"}</div>
+              {attraction.price > 0 && !myTickets.includes(attraction.id) && <div style={{ fontSize: 10, color: C.warn, fontWeight: 600, marginBottom: 2 }}>⏳ {t("att.sellsOut")}</div>}
+              {myTickets.includes(attraction.id) && <div style={{ fontSize: 10, color: "#10B981", fontWeight: 700, marginBottom: 2, display: "flex", alignItems: "center", gap: 4 }}><Check size={11}/>{t("att.ticketMarked")}</div>}
+              <div style={{ fontSize: 10, color: C.inkMute }}>{attraction.price > 0 ? t("card.from") : t("att.factEntry")}</div>
+              <div style={{ fontSize: 26, fontWeight: 800, letterSpacing: "-0.03em" }}>{attraction.price > 0 ? `€${attraction.price}` : t("card.free")}</div>
             </div>
-            <div onClick={() => { if (onFav) onFav(attraction.id); }} style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 4, padding: "12px 14px", borderRadius: 14, border: `1.5px solid ${C.line}`, fontSize: 12, fontWeight: 600, color: C.ink, cursor: "pointer", background: "white" }}>+ My Day</div>
+            <div onClick={() => { if (onFav) onFav(attraction.id); }} style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 4, padding: "12px 14px", borderRadius: 14, border: `1.5px solid ${C.line}`, fontSize: 12, fontWeight: 600, color: C.ink, cursor: "pointer", background: "white" }}>{t("att.myDay")}</div>
             {attraction.price > 0 && attraction.link && (
               myTickets.includes(attraction.id) ? (
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 6, padding: "12px 18px", borderRadius: 14, background: "#D1FAE5", color: "#065F46", fontSize: 13, fontWeight: 700, border: "1.5px solid #10B981" }}>
-                  <Check size={14}/>Got ticket
+                  <Check size={14}/>{t("att.gotTicket")}
                 </div>
               ) : (
-                <div onClick={() => onBook && onBook(attraction)} style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 6, padding: "12px 18px", borderRadius: 14, background: "linear-gradient(135deg,#1D4ED8,#1E40AF)", color: "white", fontSize: 13, fontWeight: 700, cursor: "pointer", boxShadow: "0 4px 14px rgba(29,78,216,0.3)" }}>{attraction.skip ? "Skip the Line →" : "Reserve Your Spot →"}</div>
+                <div onClick={() => onBook && onBook(attraction)} style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 6, padding: "12px 18px", borderRadius: 14, background: "linear-gradient(135deg,#1D4ED8,#1E40AF)", color: "white", fontSize: 13, fontWeight: 700, cursor: "pointer", boxShadow: "0 4px 14px rgba(29,78,216,0.3)" }}>{attraction.skip ? `${t("att.skipLineCta")} →` : `${t("att.reserveSpot")} →`}</div>
               )
             )}
           </div>
@@ -120,7 +146,7 @@ export default function AttractionSheet({ attraction, allAttractions, onClose, o
             <div onClick={() => onToggleTicket(attraction.id)} style={{ marginTop: 10, display: "flex", alignItems: "center", justifyContent: "center", gap: 6, padding: "10px", borderRadius: 12, background: myTickets.includes(attraction.id) ? "#FEF2F2" : "#F8FAFC", border: `1px dashed ${myTickets.includes(attraction.id) ? "#FCA5A5" : C.line}`, cursor: "pointer" }}>
               <Ticket size={13} color={myTickets.includes(attraction.id) ? "#DC2626" : C.inkSoft}/>
               <span style={{ fontSize: 12, fontWeight: 600, color: myTickets.includes(attraction.id) ? "#DC2626" : C.inkSoft }}>
-                {myTickets.includes(attraction.id) ? "Remove from My Tickets" : "Already got your ticket? Mark as owned"}
+                {myTickets.includes(attraction.id) ? t("att.removeTicket") : t("att.markOwned")}
               </span>
             </div>
           )}

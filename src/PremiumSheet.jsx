@@ -14,6 +14,7 @@ import {
   X, Crown, Sparkles, Wifi, Camera, Zap, Gift, Map,
   Check, Star, ArrowLeft, Shield, Clock
 } from "lucide-react";
+import { useLanguage } from "./LanguageContext";
 
 // ── Renkler ──
 const colors = {
@@ -33,53 +34,29 @@ const colors = {
 const fontDisplay = "'Plus Jakarta Sans', system-ui, sans-serif";
 const fontBody = "'Inter', system-ui, sans-serif";
 
-// ── Premium özellik listesi ──
-const PREMIUM_FEATURES = [
-  {
-    icon: Sparkles,
-    title: "AI Trip Planner",
-    description: "Get a personalized itinerary based on your interests, pace, and dates",
-    highlight: true,
-  },
-  {
-    icon: Wifi,
-    title: "Offline Access",
-    description: "Download all guides for offline use — no internet needed",
-    highlight: false,
-  },
-  {
-    icon: Camera,
-    title: "Photo Spots Map",
-    description: "Best Instagram angles and hidden viewpoints for every attraction",
-    highlight: false,
-  },
-  {
-    icon: Zap,
-    title: "Daily Briefing",
-    description: "Personalized daily plan: weather, closures, crowd levels & suggestions",
-    highlight: false,
-  },
-  {
-    icon: Gift,
-    title: "Exclusive Discounts",
-    description: "Special deals at partner restaurants, hammams & experiences",
-    highlight: false,
-  },
-];
-
-// ── Zaten free olan özellikler ──
-const FREE_FEATURES = [
-  "All attraction guides & details",
-  "Ticket booking (skip-the-line)",
-  "Must-See Places & Hidden Gems",
-  "Transport guide & routes",
-  "Turkish phrases & safety tips",
-  "Basic 3-day itinerary",
-];
-
 export default function PremiumSheet({ onClose, onPurchase, isPremium }) {
+  const { t } = useLanguage();
   // ── Animasyon ──
   const [visible, setVisible] = useState(false);
+
+  // ── Premium özellik listesi (t ile çevrilebilir) ──
+  const PREMIUM_FEATURES = [
+    { icon: Sparkles, title: t("premiumF.aiTitle"), description: t("premiumF.aiDesc"), highlight: true },
+    { icon: Wifi, title: t("premiumF.offlineTitle"), description: t("premiumF.offlineDesc"), highlight: false },
+    { icon: Camera, title: t("premiumF.photoTitle"), description: t("premiumF.photoDesc"), highlight: false },
+    { icon: Zap, title: t("premiumF.briefingTitle"), description: t("premiumF.briefingDesc"), highlight: false },
+    { icon: Gift, title: t("premiumF.discountTitle"), description: t("premiumF.discountDesc"), highlight: false },
+  ];
+
+  // ── Zaten free olan özellikler ──
+  const FREE_FEATURES = [
+    t("premiumF.free1"),
+    t("premiumF.free2"),
+    t("premiumF.free3"),
+    t("premiumF.free4"),
+    t("premiumF.free5"),
+    t("premiumF.free6"),
+  ];
 
   useEffect(() => {
     setTimeout(() => setVisible(true), 10);
@@ -204,7 +181,7 @@ export default function PremiumSheet({ onClose, onPurchase, isPremium }) {
               lineHeight: 1.5,
             }}
           >
-            Unlock the full travel companion experience
+            {t("premium.subtitle")}
           </div>
 
           {/* Fiyat */}
@@ -213,7 +190,7 @@ export default function PremiumSheet({ onClose, onPurchase, isPremium }) {
               <span style={{ fontSize: 36, fontWeight: 800, fontFamily: fontDisplay }}>€4.99</span>
             </div>
             <div style={{ fontSize: 12, color: "rgba(255, 255, 255, 0.45)", marginTop: 4 }}>
-              One-time payment · Lifetime access · No subscription
+              {t("premium.priceNote")}
             </div>
           </div>
         </div>
@@ -232,7 +209,7 @@ export default function PremiumSheet({ onClose, onPurchase, isPremium }) {
               marginBottom: 12,
             }}
           >
-            What you get
+            {t("onboard.what")}
           </div>
 
           {PREMIUM_FEATURES.map((feature) => (
@@ -313,7 +290,7 @@ export default function PremiumSheet({ onClose, onPurchase, isPremium }) {
               marginBottom: 10,
             }}
           >
-            Always free
+            {t("premium.alwaysFree")}
           </div>
           <div
             style={{
@@ -362,7 +339,7 @@ export default function PremiumSheet({ onClose, onPurchase, isPremium }) {
               }}
             >
               <Check size={16} />
-              You're already Premium!
+              {t("premium.alreadyPremium")}
             </div>
           ) : (
             <>
@@ -389,7 +366,7 @@ export default function PremiumSheet({ onClose, onPurchase, isPremium }) {
                 }}
               >
                 <Crown size={16} />
-                Unlock Premium · €4.99
+                {t("premium.unlock")} · €4.99
               </div>
 
               {/* Güvence mesajı */}
@@ -405,14 +382,12 @@ export default function PremiumSheet({ onClose, onPurchase, isPremium }) {
                 }}
               >
                 <span style={{ display: "flex", alignItems: "center", gap: 3 }}>
-                  <Shield size={11} /> Secure payment
+                  <Shield size={11} /> {t("premium.securePayment")}
                 </span>
                 <span>·</span>
                 <span style={{ display: "flex", alignItems: "center", gap: 3 }}>
-                  <Clock size={11} /> Instant access
+                  <Clock size={11} /> {t("premium.instantAccess")}
                 </span>
-                <span>·</span>
-                <span>No subscription</span>
               </div>
             </>
           )}
@@ -428,7 +403,7 @@ export default function PremiumSheet({ onClose, onPurchase, isPremium }) {
               cursor: "pointer",
             }}
           >
-            Maybe later
+            {t("premium.maybeLater")}
           </div>
         </div>
       </div>

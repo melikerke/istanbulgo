@@ -10,6 +10,7 @@ import { useState, useEffect } from "react";
 import {
   Heart, Ticket, Star, Info, Clock, MapPin, Zap, X, ChevronRight, ExternalLink
 } from "lucide-react";
+import { useLanguage } from "./LanguageContext";
 
 // ── Renkler ──
 const colors = {
@@ -40,6 +41,7 @@ export default function MiniPreview({
   onUpgrade,     // premium yükseltme fonksiyonu
   onBook,        // booking overlay fonksiyonu
 }) {
+  const { t } = useLanguage();
   // ── Animasyon state'i ──
   const [visible, setVisible] = useState(false);
 
@@ -187,7 +189,7 @@ export default function MiniPreview({
                 letterSpacing: "0.02em",
               }}
             >
-              {attraction.hook}
+              {t(`att.${attraction.id}.hook`) !== `att.${attraction.id}.hook` ? t(`att.${attraction.id}.hook`) : attraction.hook}
             </div>
           )}
 
@@ -304,7 +306,7 @@ export default function MiniPreview({
               marginBottom: 10,
             }}
           >
-            {attraction.teaser}
+            {t(`att.${attraction.id}.teaser`) !== `att.${attraction.id}.teaser` ? t(`att.${attraction.id}.teaser`) : attraction.teaser}
           </div>
         </div>
 
@@ -345,7 +347,7 @@ export default function MiniPreview({
                 cursor: "pointer",
               }}
             >
-              Details
+              {t("card.details")}
             </div>
 
             {/* Primary: Book now + fiyat */}
@@ -371,7 +373,7 @@ export default function MiniPreview({
               }}
             >
               <Ticket size={14} />
-              {attraction.skip ? "Skip the Line →" : "Book · €" + attraction.price}
+              {attraction.skip ? `${t("card.skipLine")} →` : `${t("card.book")} · €${attraction.price}`}
             </div>
           </div>
         </div>

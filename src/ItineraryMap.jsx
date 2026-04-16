@@ -1,16 +1,17 @@
 // ══════════════════════════════════════════════
 // ItineraryMap.jsx — Interactive Mapbox GL map
 // ══════════════════════════════════════════════
+// Mapbox GL JS yalnızca "Show map" butonuna basılınca yüklenir
+// Eski telefonlarda performans sorunu yaşanmasın diye
 
 import { useState, useEffect, useRef } from "react";
-import mapboxgl from "mapbox-gl";
-import "mapbox-gl/dist/mapbox-gl.css";
 import {
-  ArrowLeft, Ticket, Navigation, ChevronRight,
+  ArrowLeft, Ticket, Navigation, ChevronRight, MapPin,
   RotateCcw, ExternalLink
 } from "lucide-react";
+import { useLanguage } from "./LanguageContext";
 
-mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_TOKEN;
+const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_TOKEN;
 
 const C = {
   ink: "#0F172A", inkSoft: "#475569", inkMute: "#94A3B8",
@@ -42,7 +43,9 @@ export default function ItineraryMap({
   onOpenAttraction, onPreview, onBook, onRebuild, onBack,
   myTickets = [], onToggleTicket, onShare,
 }) {
+  const { t } = useLanguage();
   const [navOpen, setNavOpen] = useState(null);
+  const [mapEnabled, setMapEnabled] = useState(false);
   const mapContainerRef = useRef(null);
   const mapRef = useRef(null);
   const markersRef = useRef([]);
@@ -52,96 +55,109 @@ export default function ItineraryMap({
     .filter(item => item.id)
     .map(item => {
       const att = allAttractions.find(a => a.id === item.id);
-      return att ? { ...att, time: item.t, duration: item.m } : null;
+      return att ? { ...att, time: item.t, duration: item.m, fixed: item.fixed } : null;
     })
     .filter(Boolean) : [];
 
   useEffect(() => {
-    if (!mapContainerRef.current || daySpots.length === 0) return;
+    if (!mapEnabled || !mapContainerRef.current || daySpots.length === 0) return;
 
-    // Eski haritayı temizle
-    markersRef.current.forEach(m => m.remove());
-    markersRef.current = [];
-    if (mapRef.current) {
-      mapRef.current.remove();
-      mapRef.current = null;
-    }
+    let cancelled = false;
 
-    const lngs = daySpots.map(s => s.lng);
-    const lats = daySpots.map(s => s.lat);
-    const bounds = new mapboxgl.LngLatBounds(
-      [Math.min(...lngs), Math.min(...lats)],
-      [Math.max(...lngs), Math.max(...lats)]
-    );
+    // Mapbox GL'yi dinamik olarak yükle — kullanıcı "Show map"e basana kadar hiç yüklenmez
+    Promise.all([
+      import("mapbox-gl"),
+      import("mapbox-gl/dist/mapbox-gl.css"),
+    ]).then(([mapboxModule]) => {
+      if (cancelled) return;
+      const mapboxgl = mapboxModule.default;
+      mapboxgl.accessToken = MAPBOX_TOKEN;
 
-    const map = new mapboxgl.Map({
-      container: mapContainerRef.current,
-      style: "mapbox://styles/mapbox/streets-v12",
-      bounds,
-      fitBoundsOptions: { padding: 50, maxZoom: 15 },
-      attributionControl: false,
-    });
-
-    map.addControl(new mapboxgl.NavigationControl({ showCompass: false }), "top-right");
-
-    map.on("load", () => {
-      // Rota çizgisi
-      if (daySpots.length > 1) {
-        map.addSource("route", {
-          type: "geojson",
-          data: {
-            type: "Feature",
-            properties: {},
-            geometry: {
-              type: "LineString",
-              coordinates: daySpots.map(s => [s.lng, s.lat]),
-            },
-          },
-        });
-        map.addLayer({
-          id: "route",
-          type: "line",
-          source: "route",
-          layout: { "line-join": "round", "line-cap": "round" },
-          paint: {
-            "line-color": "#0B1220",
-            "line-width": 3,
-            "line-opacity": 0.75,
-            "line-dasharray": [2, 1.5],
-          },
-        });
+      // Eski haritayı temizle
+      markersRef.current.forEach(m => m.remove());
+      markersRef.current = [];
+      if (mapRef.current) {
+        mapRef.current.remove();
+        mapRef.current = null;
       }
 
-      // Numaralı pinler
-      daySpots.forEach((spot, i) => {
-        const el = document.createElement("div");
-        el.style.cssText = `
-          width: 34px; height: 34px; border-radius: 17px;
-          background: #0B1220; color: #C59D5F;
-          display: flex; align-items: center; justify-content: center;
-          font-size: 14px; font-weight: 800;
-          border: 3px solid white;
-          box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-          cursor: pointer;
-          font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
-        `;
-        el.innerText = i + 1;
-        el.addEventListener("click", (e) => {
-          e.stopPropagation();
-          if (onPreview) onPreview(spot);
-        });
+      const lngs = daySpots.map(s => s.lng);
+      const lats = daySpots.map(s => s.lat);
+      const bounds = new mapboxgl.LngLatBounds(
+        [Math.min(...lngs), Math.min(...lats)],
+        [Math.max(...lngs), Math.max(...lats)]
+      );
 
-        const marker = new mapboxgl.Marker({ element: el })
-          .setLngLat([spot.lng, spot.lat])
-          .addTo(map);
-
-        markersRef.current.push(marker);
+      const map = new mapboxgl.Map({
+        container: mapContainerRef.current,
+        style: "mapbox://styles/mapbox/streets-v12",
+        bounds,
+        fitBoundsOptions: { padding: 50, maxZoom: 15 },
+        attributionControl: false,
       });
+
+      map.addControl(new mapboxgl.NavigationControl({ showCompass: false }), "top-right");
+
+      map.on("load", () => {
+        // Rota çizgisi
+        if (daySpots.length > 1) {
+          map.addSource("route", {
+            type: "geojson",
+            data: {
+              type: "Feature",
+              properties: {},
+              geometry: {
+                type: "LineString",
+                coordinates: daySpots.map(s => [s.lng, s.lat]),
+              },
+            },
+          });
+          map.addLayer({
+            id: "route",
+            type: "line",
+            source: "route",
+            layout: { "line-join": "round", "line-cap": "round" },
+            paint: {
+              "line-color": "#0B1220",
+              "line-width": 3,
+              "line-opacity": 0.75,
+              "line-dasharray": [2, 1.5],
+            },
+          });
+        }
+
+        // Numaralı pinler
+        daySpots.forEach((spot, i) => {
+          const el = document.createElement("div");
+          el.style.cssText = `
+            width: 34px; height: 34px; border-radius: 17px;
+            background: #0B1220; color: #C59D5F;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 14px; font-weight: 800;
+            border: 3px solid white;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+            cursor: pointer;
+            font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+          `;
+          el.innerText = i + 1;
+          el.addEventListener("click", (e) => {
+            e.stopPropagation();
+            if (onPreview) onPreview(spot);
+          });
+
+          const marker = new mapboxgl.Marker({ element: el })
+            .setLngLat([spot.lng, spot.lat])
+            .addTo(map);
+
+          markersRef.current.push(marker);
+        });
+      });
+
+      mapRef.current = map;
     });
 
-    mapRef.current = map;
-
     return () => {
+      cancelled = true;
       markersRef.current.forEach(m => m.remove());
       markersRef.current = [];
       if (mapRef.current) {
@@ -149,7 +165,7 @@ export default function ItineraryMap({
         mapRef.current = null;
       }
     };
-  }, [activeDay, planResult]);
+  }, [activeDay, planResult, mapEnabled]);
 
   if (!activePlan) return null;
 
@@ -170,16 +186,65 @@ export default function ItineraryMap({
       </div>
 
       {/* INTERAKTİF MAP */}
-      <div
-        ref={mapContainerRef}
-        style={{
-          position: "relative",
-          borderRadius: 20, overflow: "hidden",
-          border: `1px solid ${C.line}`,
-          marginBottom: 14, height: 260,
-          background: "#EAF0F5",
-        }}
-      />
+      {mapEnabled ? (
+        <div
+          ref={mapContainerRef}
+          style={{
+            position: "relative",
+            borderRadius: 20, overflow: "hidden",
+            border: `1px solid ${C.line}`,
+            marginBottom: 14, height: 260,
+            background: "#EAF0F5",
+          }}
+        />
+      ) : (
+        <div
+          onClick={() => setMapEnabled(true)}
+          style={{
+            position: "relative",
+            borderRadius: 20, overflow: "hidden",
+            border: `1px solid ${C.line}`,
+            marginBottom: 14, height: 180,
+            background: "linear-gradient(135deg, #EAF0F5, #DBEAFE)",
+            cursor: "pointer",
+            display: "flex", flexDirection: "column",
+            alignItems: "center", justifyContent: "center",
+            gap: 10,
+          }}
+        >
+          {/* Decorative pin cluster preview */}
+          <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 4 }}>
+            {daySpots.slice(0, Math.min(5, daySpots.length)).map((_, i) => (
+              <div key={i} style={{
+                width: 28, height: 28, borderRadius: 14,
+                background: C.dark, color: C.gold,
+                display: "flex", alignItems: "center", justifyContent: "center",
+                fontSize: 12, fontWeight: 800,
+                border: "2px solid white",
+                boxShadow: "0 2px 6px rgba(0,0,0,0.2)",
+                marginLeft: i > 0 ? -8 : 0,
+              }}>
+                {i + 1}
+              </div>
+            ))}
+          </div>
+          <div style={{ fontSize: 14, fontWeight: 700, color: C.ink, fontFamily: fd }}>
+            {daySpots.length} {t("plan.stopsOnMap")}
+          </div>
+          <div style={{
+            display: "flex", alignItems: "center", gap: 6,
+            padding: "10px 18px", borderRadius: 99,
+            background: C.dark, color: "white",
+            fontSize: 12, fontWeight: 700,
+          }}>
+            <MapPin size={13} color={C.gold} />
+            {t("plan.showMap")}
+          </div>
+          <div style={{ fontSize: 10, color: C.inkMute, marginTop: 2 }}>
+            {t("plan.tapToLoad")}
+          </div>
+        </div>
+      )}
 
       {/* Day tabs */}
       <div style={{ display: "flex", gap: 8, overflowX: "auto", marginBottom: 14, paddingBottom: 4 }}>
@@ -190,8 +255,12 @@ export default function ItineraryMap({
             color: activeDay === d.day ? "white" : C.ink,
             border: activeDay === d.day ? "none" : `1px solid ${C.line}`,
           }}>
-            <div style={{ fontSize: 12, fontWeight: 700 }}>Day {d.day}</div>
-            <div style={{ fontSize: 10, opacity: 0.7, marginTop: 2 }}>{d.title}</div>
+            <div style={{ fontSize: 12, fontWeight: 700 }}>
+              {d.dateLabel ? d.dateLabel : `Day ${d.day}`}
+            </div>
+            <div style={{ fontSize: 10, opacity: 0.7, marginTop: 2 }}>
+              {d.dateLabel ? `Day ${d.day} · ${d.title}` : d.title}
+            </div>
           </div>
         ))}
       </div>
@@ -231,7 +300,8 @@ export default function ItineraryMap({
                 <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
                   <div>
                     <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                      <span style={{ fontSize: 11, fontWeight: 700, color: C.inkMute }}>{spot.time}</span>
+                      <span style={{ fontSize: 11, fontWeight: 700, color: spot.fixed ? C.blue : C.inkMute }}>{spot.time}</span>
+                      {spot.fixed && <span style={{ fontSize: 9, fontWeight: 700, color: C.blue, background: "#DBEAFE", padding: "1px 6px", borderRadius: 5 }}>{t("plan.fixed")}</span>}
                       <span style={{ fontSize: 11, color: C.inkMute }}>·</span>
                       <span style={{ fontSize: 11, color: C.inkMute }}>{spot.duration}</span>
                     </div>
@@ -256,7 +326,7 @@ export default function ItineraryMap({
                             border: `1px solid ${C.ok}`,
                           }}
                         >
-                          ✓ Got ticket
+                          ✓ {t("card.gotTicket")}
                         </div>
                       ) : (
                         <>
@@ -348,7 +418,7 @@ export default function ItineraryMap({
                 </div>
                 <div style={{ flex: 1 }}>
                   <div style={{ fontSize: 12, fontWeight: 700 }}>
-                    {ticketCount} of {totalTickets} tickets marked
+                    {ticketCount} / {totalTickets} {t("plan.ticketsMarked")}
                   </div>
                   <div style={{ fontSize: 10, color: C.inkMute, marginTop: 1 }}>
                     Tap "Got it" on cards you already have
@@ -363,14 +433,14 @@ export default function ItineraryMap({
                 borderRadius: 14, border: `1px solid ${C.line}`, background: "white",
                 padding: "12px", fontSize: 12, fontWeight: 700, color: C.inkSoft, cursor: "pointer",
               }}>
-                <RotateCcw size={13} />Rebuild
+                <RotateCcw size={13} />{t("plan.rebuild")}
               </div>
               <div onClick={() => onShare && onShare()} style={{
                 display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
                 borderRadius: 14, background: C.dark,
                 padding: "12px", fontSize: 12, fontWeight: 700, color: "white", cursor: "pointer",
               }}>
-                <ExternalLink size={13} />Share plan
+                <ExternalLink size={13} />{t("plan.sharePlan")}
               </div>
             </div>
           </>

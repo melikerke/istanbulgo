@@ -19,6 +19,7 @@ import { generatePlan, INTERESTS, PACES } from './planEngine';
 import ItineraryMap from './ItineraryMap';
 import WeatherWidget from './WeatherWidget';
 import InstallPrompt from './InstallPrompt';
+import TimedTicketSheet from './TimedTicketSheet';
 
 const T={bg:"#F5F7FB",surface:"#FFFFFF",ink:"#0F172A",inkSoft:"#475569",inkMute:"#94A3B8",line:"#E2E8F0",primary:"#1D4ED8",primarySoft:"#DBEAFE",gold:"#C59D5F",goldSoft:"#FBF5EB",ok:"#059669",okSoft:"#D1FAE5",warn:"#D97706",warnSoft:"#FEF3C7",danger:"#E11D48",dangerSoft:"#FFE4E6",dark:"#0B1220",sh:{hero:"0 20px 50px rgba(15,23,42,0.16)"}};
 const fd="'Plus Jakarta Sans',system-ui,sans-serif";
@@ -60,13 +61,24 @@ const GUIDES=[
   {id:"neighborhoods",title:"Neighborhood Guides",sub:"Choose the vibe, then choose the district",emoji:"🏘️",ids:[],pick:null},
 ];
 
+// Guide id → translation key map
+const GUIDE_KEYS={
+  "must-see":{title:"guide.mustSeeTitle",sub:"guide.mustSeeSub"},
+  "hidden-gems":{title:"guide.hiddenTitle",sub:"guide.hiddenSub"},
+  "experiences":{title:"guide.expTitle",sub:"guide.expSub"},
+  "family":{title:"guide.familyTitle",sub:"guide.familySub"},
+  "rainy":{title:"guide.rainyTitle",sub:"guide.rainySub"},
+  "food":{title:"guide.foodTitle",sub:"guide.foodSub"},
+  "neighborhoods":{title:"guide.nbTitle",sub:"guide.nbSub"},
+};
+
 const NEIGHBORHOODS=[
-  {n:"Sultanahmet",d:"Istanbul's history core — Hagia Sophia, the Blue Mosque, Topkapı, and postcard views in every direction",img:"/hagia.jpg"},
-  {n:"Beyoğlu & Taksim",d:"City energy, rooftop bars, İstiklal crowds, and Galata just downhill",img:"/galata.jpg"},
-  {n:"Kadıköy",d:"Asian-side favorite for café hopping, food, nightlife, and local rhythm",img:"/foodtour.jpg"},
-  {n:"Balat & Fener",d:"Colorful hills, old churches, vintage shops, and slow café mornings",img:"/basilica.jpg"},
-  {n:"Ortaköy",d:"Bosphorus-front strolls, kumpir stands, and one of the city's best waterfront mosque views",img:"/cruise.jpg"},
-  {n:"Karaköy",d:"Creative, connected, and easy for cafés, galleries, ferries, and evenings out",img:"/maiden.jpg"},
+  {nKey:"nb.sultanahmet",dKey:"nb.sultanahmetD",img:"/hagia.jpg"},
+  {nKey:"nb.beyoglu",dKey:"nb.beyogluD",img:"/galata.jpg"},
+  {nKey:"nb.kadikoy",dKey:"nb.kadikoyD",img:"/foodtour.jpg"},
+  {nKey:"nb.balat",dKey:"nb.balatD",img:"/basilica.jpg"},
+  {nKey:"nb.ortakoy",dKey:"nb.ortakoyD",img:"/cruise.jpg"},
+  {nKey:"nb.karakoy",dKey:"nb.karakoyD",img:"/maiden.jpg"},
 ];
 
 const PLAN_DAYS=[
@@ -106,23 +118,24 @@ const Bk=({onClick})=><div onClick={onClick} style={{width:40,height:40,borderRa
 
 // ══ GUIDE LISTING PAGE ══
 function GuidePage({guide,onBack,onPreview,onDetail,onFav,favs}){
+  const { t } = useLanguage();
   if(!guide)return null;
   const items=guide.ids.map(id=>ATT.find(a=>a.id===id)).filter(Boolean);
   const featured=items.find(a=>a.id===guide.pick)||items[0];
   const rest=items.filter(a=>a.id!==featured?.id);
   return(<div>
-    <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:20}}><Bk onClick={onBack}/><div><Lbl>Guide</Lbl><div style={{fontSize:24,fontWeight:800,fontFamily:fd}}>{guide.title}</div></div></div>
-    <div style={{fontSize:13,color:T.inkSoft,lineHeight:1.6,marginBottom:20}}>{guide.sub}</div>
+    <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:20}}><Bk onClick={onBack}/><div><Lbl>{t("misc.popular")}</Lbl><div style={{fontSize:24,fontWeight:800,fontFamily:fd}}>{t(GUIDE_KEYS[guide.id]?.title||"")||guide.title}</div></div></div>
+    <div style={{fontSize:13,color:T.inkSoft,lineHeight:1.6,marginBottom:20}}>{t(GUIDE_KEYS[guide.id]?.sub||"")||guide.sub}</div>
     {/* Featured card */}
     {featured&&<div onClick={()=>onPreview(featured)} style={{borderRadius:24,overflow:"hidden",marginBottom:20,cursor:"pointer",position:"relative"}}>
       <div style={{position:"relative",height:200}}><img src={featured.img} alt={featured.title} style={{width:"100%",height:"100%",objectFit:"cover"}}/><div style={{position:"absolute",inset:0,background:"linear-gradient(to top,rgba(15,23,42,0.65),transparent 50%)"}}/></div>
-      <div style={{position:"absolute",top:12,left:12,display:"flex",gap:6}}><Pill tone="rgba(255,255,255,0.92)" color={T.dark}>{featured.badge}</Pill><Pill tone="rgba(197,157,95,0.9)" color="white">Editor's pick</Pill></div>
+      <div style={{position:"absolute",top:12,left:12,display:"flex",gap:6}}><Pill tone="rgba(255,255,255,0.92)" color={T.dark}>{featured.badge}</Pill><Pill tone="rgba(197,157,95,0.9)" color="white">{t("badge.editorsPick")}</Pill></div>
       <div style={{position:"absolute",bottom:0,left:0,right:0,padding:16}}>
         <div style={{fontSize:20,fontWeight:800,color:"white",fontFamily:fd}}>{featured.title}</div>
-        <div style={{fontSize:12,color:"rgba(255,255,255,0.75)",marginTop:4}}>{featured.teaser}</div>
+        <div style={{fontSize:12,color:"rgba(255,255,255,0.75)",marginTop:4}}>{t(`att.${featured.id}.teaser`) !== `att.${featured.id}.teaser` ? t(`att.${featured.id}.teaser`) : featured.teaser}</div>
         <div style={{display:"flex",gap:8,marginTop:12}}>
-          <div onClick={(e)=>{e.stopPropagation();onDetail(featured)}} style={{padding:"8px 14px",borderRadius:12,background:"rgba(255,255,255,0.15)",backdropFilter:"blur(8px)",fontSize:12,fontWeight:600,color:"white",cursor:"pointer"}}>Full details</div>
-          <div onClick={(e)=>{e.stopPropagation();handleBook(featured)}} style={{padding:"8px 14px",borderRadius:12,background:"white",fontSize:12,fontWeight:700,color:T.dark,display:"flex",alignItems:"center",gap:4,cursor:"pointer"}}>Book · €{featured.price}</div>
+          <div onClick={(e)=>{e.stopPropagation();onDetail(featured)}} style={{padding:"8px 14px",borderRadius:12,background:"rgba(255,255,255,0.15)",backdropFilter:"blur(8px)",fontSize:12,fontWeight:600,color:"white",cursor:"pointer"}}>{t("card.details")}</div>
+          <div onClick={(e)=>{e.stopPropagation();handleBook(featured)}} style={{padding:"8px 14px",borderRadius:12,background:"white",fontSize:12,fontWeight:700,color:T.dark,display:"flex",alignItems:"center",gap:4,cursor:"pointer"}}>{t("card.book")} · €{featured.price}</div>
         </div>
       </div>
     </div>}
@@ -131,7 +144,7 @@ function GuidePage({guide,onBack,onPreview,onDetail,onFav,favs}){
       <img src={a.img} alt={a.title} style={{width:72,height:72,borderRadius:16,objectFit:"cover",flexShrink:0}}/>
       <div style={{flex:1,minWidth:0}}>
         <div style={{fontSize:14,fontWeight:700}}>{a.title}</div>
-        <div style={{fontSize:12,color:T.inkMute,marginTop:3}}>{a.teaser}</div>
+        <div style={{fontSize:12,color:T.inkMute,marginTop:3}}>{t(`att.${a.id}.teaser`) !== `att.${a.id}.teaser` ? t(`att.${a.id}.teaser`) : a.teaser}</div>
         <div style={{display:"flex",alignItems:"center",gap:8,marginTop:6}}>
           <span style={{fontSize:12,fontWeight:800}}>€{a.price}</span>
           <span style={{fontSize:11,color:T.inkMute}}>{a.dur}</span>
@@ -164,8 +177,11 @@ export default function IstanbulGo(){
   const[searchQuery,setSearchQuery]=useState("");
   const[searchFocused,setSearchFocused]=useState(false);
   const[myTickets,setMyTickets]=useState([]);
+  const[timedTickets,setTimedTickets]=useState({});
+  const[tripStartDate,setTripStartDate]=useState(null);
   const[tripTab,setTripTab]=useState("favorites");
   const[ticketSearch,setTicketSearch]=useState("");
+  const[timedTicketSheet,setTimedTicketSheet]=useState(null);
   const[menuOpen,setMenuOpen]=useState(false);
   const[isPWA,setIsPWA]=useState(false);
 
@@ -188,11 +204,38 @@ export default function IstanbulGo(){
     const savedPremium=localStorage.getItem("premium");
     const savedFavs=localStorage.getItem("favs");
     const savedTickets=localStorage.getItem("myTickets");
+    const savedTimed=localStorage.getItem("timedTickets");
+    const savedStart=localStorage.getItem("tripStartDate");
     if(savedUser) setUser(JSON.parse(savedUser));
     if(savedPremium) setIsPremium(true);
     if(savedFavs) setFavs(new Set(JSON.parse(savedFavs)));
     if(savedTickets) setMyTickets(JSON.parse(savedTickets));
+    if(savedTimed) setTimedTickets(JSON.parse(savedTimed));
+    if(savedStart) setTripStartDate(savedStart);
   },[]);
+
+  const setTimedTicket=(ticketId,date,time)=>{
+    const updated={...timedTickets,[ticketId]:{date,time}};
+    setTimedTickets(updated);
+    localStorage.setItem("timedTickets",JSON.stringify(updated));
+  };
+
+  const removeTimedTicket=(ticketId)=>{
+    const updated={...timedTickets};
+    delete updated[ticketId];
+    setTimedTickets(updated);
+    localStorage.setItem("timedTickets",JSON.stringify(updated));
+    // Plan varsa yeniden üret
+    if(planResult&&planDays){
+      const newPlan=generatePlan({days:planDays,pace:planPace||"balanced",interests:planInterests||[],timedTickets:updated,tripStartDate});
+      setPlanResult(newPlan);
+    }
+  };
+
+  const saveTripStartDate=(date)=>{
+    setTripStartDate(date);
+    localStorage.setItem("tripStartDate",date);
+  };
 
   const toggleTicket=(id)=>{
     const updated=myTickets.includes(id)?myTickets.filter(t=>t!==id):[...myTickets,id];
@@ -308,7 +351,7 @@ export default function IstanbulGo(){
         </div>
         <div onClick={()=>{
           // Plan'ı hemen oluştur
-          const result = generatePlan({days:obDays,pace:obPace||"balanced",interests:obInterests});
+          const result = generatePlan({days:obDays,pace:obPace||"balanced",interests:obInterests,timedTickets,tripStartDate});
           setPlanDays(obDays);
           setPlanPace(obPace||"balanced");
           setPlanInterests(obInterests);
@@ -335,7 +378,7 @@ export default function IstanbulGo(){
         {/* HEADER */}
         <div style={{position:"relative",overflow:"hidden",background:`linear-gradient(180deg,${T.dark} 0%,#16233B 58%,#1A2B45 100%)`,padding:"32px 20px 20px",color:"white"}}>
           <div style={{position:"absolute",inset:0,opacity:0.06,backgroundImage:"radial-gradient(circle at 1px 1px,white 0.5px,transparent 0)",backgroundSize:"20px 20px",pointerEvents:"none"}}/>
-          <div style={{position:"relative",display:"flex",justifyContent:"space-between",alignItems:"center"}}><div><div style={{display:"flex",alignItems:"center",gap:8}}><span style={{fontSize:24,fontWeight:800,letterSpacing:"-0.04em",fontFamily:fd}}>Istanbul</span><span style={{background:"rgba(255,255,255,0.1)",padding:"4px 8px",borderRadius:99,fontSize:11,fontWeight:700,letterSpacing:"0.14em",color:"#BFDBFE"}}>GO</span></div><div style={{marginTop:4,fontSize:11,textTransform:"uppercase",letterSpacing:"0.14em",color:"rgba(255,255,255,0.35)"}}>tourist super app</div></div><div style={{display:"flex",gap:8}}>{favs.size>0&&<div onClick={()=>goTab("trip")} style={{position:"relative",width:40,height:40,borderRadius:16,border:"1px solid rgba(255,255,255,0.1)",background:"rgba(255,255,255,0.05)",display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer"}}><Heart size={17} color="#FCA5A5" fill="#FCA5A5"/><div style={{position:"absolute",top:-2,right:-2,width:16,height:16,borderRadius:8,background:T.danger,fontSize:9,fontWeight:800,color:"white",display:"flex",alignItems:"center",justifyContent:"center"}}>{favs.size}</div></div>}<div onClick={()=>setLangOpen(true)} style={{width:40,height:40,borderRadius:16,border:"1px solid rgba(255,255,255,0.1)",background:"rgba(255,255,255,0.05)",display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",fontSize:16}}>{LANGUAGES.find(l=>l.code===lang)?.flag||"🌐"}</div><div onClick={()=>setMenuOpen(true)} style={{width:40,height:40,borderRadius:16,border:"1px solid rgba(255,255,255,0.1)",background:"rgba(255,255,255,0.05)",display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer"}}><Menu size={18} color="rgba(255,255,255,0.85)"/></div></div></div>
+          <div style={{position:"relative",display:"flex",justifyContent:"space-between",alignItems:"center"}}><div><div style={{display:"flex",alignItems:"center",gap:8}}><span style={{fontSize:24,fontWeight:800,letterSpacing:"-0.04em",fontFamily:fd}}>Istanbul</span><span style={{background:"rgba(255,255,255,0.1)",padding:"4px 8px",borderRadius:99,fontSize:11,fontWeight:700,letterSpacing:"0.14em",color:"#BFDBFE"}}>GO</span></div><div style={{marginTop:4,fontSize:11,textTransform:"uppercase",letterSpacing:"0.14em",color:"rgba(255,255,255,0.35)"}}>{t("header.subtitle")}</div></div><div style={{display:"flex",gap:8}}>{favs.size>0&&<div onClick={()=>goTab("trip")} style={{position:"relative",width:40,height:40,borderRadius:16,border:"1px solid rgba(255,255,255,0.1)",background:"rgba(255,255,255,0.05)",display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer"}}><Heart size={17} color="#FCA5A5" fill="#FCA5A5"/><div style={{position:"absolute",top:-2,right:-2,width:16,height:16,borderRadius:8,background:T.danger,fontSize:9,fontWeight:800,color:"white",display:"flex",alignItems:"center",justifyContent:"center"}}>{favs.size}</div></div>}<div onClick={()=>setLangOpen(true)} style={{width:40,height:40,borderRadius:16,border:"1px solid rgba(255,255,255,0.1)",background:"rgba(255,255,255,0.05)",display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",fontSize:16}}>{LANGUAGES.find(l=>l.code===lang)?.flag||"🌐"}</div><div onClick={()=>setMenuOpen(true)} style={{width:40,height:40,borderRadius:16,border:"1px solid rgba(255,255,255,0.1)",background:"rgba(255,255,255,0.05)",display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer"}}><Menu size={18} color="rgba(255,255,255,0.85)"/></div></div></div>
           {/* Search bar - inline input */}
           <div style={{position:"relative",zIndex:5,marginTop:18}}>
             <div style={{display:"flex",alignItems:"center",gap:10,background:"white",padding:"14px 16px",borderRadius:16}}>
@@ -344,7 +387,7 @@ export default function IstanbulGo(){
                 value={searchQuery}
                 onChange={(e)=>setSearchQuery(e.target.value)}
                 onFocus={()=>setSearchFocused(true)}
-                placeholder="Find tickets, routes, eSIM, tips..."
+                placeholder={t("header.search")}
                 style={{flex:1,border:"none",outline:"none",background:"transparent",fontSize:14,color:T.ink,fontFamily:fi}}
               />
               {(searchQuery||searchFocused)&&<div onClick={()=>{setSearchQuery("");setSearchFocused(false);document.activeElement?.blur()}} style={{width:22,height:22,borderRadius:11,background:"#F1F5F9",display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer"}}><X size={12} color={T.inkSoft}/></div>}
@@ -362,11 +405,11 @@ export default function IstanbulGo(){
             const matchedAtt=hasQ?ATT.filter(a=>[a.title,a.cat,a.area,a.hook,a.teaser,a.badge].join(" ").toLowerCase().includes(ql)).slice(0,6):[];
             const matchedGuide=hasQ?GUIDES.filter(g=>[g.title,g.sub].join(" ").toLowerCase().includes(ql)).slice(0,3):[];
             const quickActions=[
-              {id:"plan",label:"Plan my trip",desc:"Build a smart itinerary",kw:["plan","itinerary","trip","day","route"]},
-              {id:"transport",label:"Public Transport",desc:"Metro, tram, ferry, cards",kw:["transport","metro","tram","ferry","bus","istanbulkart","card"]},
-              {id:"esim",label:"eSIM & Data",desc:"Stay connected in Turkey",kw:["esim","data","internet","wifi","sim"]},
-              {id:"book",label:"Tickets & Tours",desc:"Browse all bookings",kw:["ticket","book","tour"]},
-              {id:"trip",label:"My saved places",desc:"Your trip wallet",kw:["saved","favorites","wallet","my"]},
+              {id:"plan",label:t("home.smartPlan"),desc:t("menu.buildItinerary"),kw:["plan","itinerary","trip","day","route","plan","program","gün"]},
+              {id:"transport",label:t("menu.publicTransport"),desc:t("home.transportSub"),kw:["transport","metro","tram","ferry","bus","istanbulkart","card","ulaşım"]},
+              {id:"esim",label:t("menu.esimData"),desc:t("home.esimSub"),kw:["esim","data","internet","wifi","sim"]},
+              {id:"book",label:t("menu.ticketsTours"),desc:t("menu.ticketsToursSub"),kw:["ticket","book","tour","bilet"]},
+              {id:"trip",label:t("trip.title"),desc:t("trip.subtitle"),kw:["saved","favorites","wallet","my","trip"]},
             ];
             const matchedQA=hasQ?quickActions.filter(qa=>[qa.label,qa.desc,...qa.kw].join(" ").toLowerCase().includes(ql)).slice(0,3):[];
             const noResults=hasQ&&matchedAtt.length===0&&matchedGuide.length===0&&matchedQA.length===0;
@@ -379,28 +422,28 @@ export default function IstanbulGo(){
 
                   {/* Empty state */}
                   {!hasQ&&<div style={{padding:"8px 16px 14px"}}>
-                    <div style={{fontSize:10,fontWeight:700,color:T.inkMute,textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:10}}>✨ Popular searches</div>
+                    <div style={{fontSize:10,fontWeight:700,color:T.inkMute,textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:10}}>✨ {t("misc.popularSearches")}</div>
                     <div style={{display:"flex",flexWrap:"wrap",gap:6}}>
                       {popular.map(p=><div key={p} onMouseDown={(e)=>{e.preventDefault();e.stopPropagation();setSearchQuery(p)}} style={{padding:"8px 14px",borderRadius:99,background:"#F1F5F9",fontSize:12,fontWeight:600,color:T.inkSoft,cursor:"pointer"}}>{p}</div>)}
                     </div>
-                    <div style={{fontSize:11,color:T.inkMute,marginTop:14,lineHeight:1.6}}>Try: Hagia Sophia, food tour, transport, hidden gems, eSIM...</div>
+                    <div style={{fontSize:11,color:T.inkMute,marginTop:14,lineHeight:1.6}}>{t("misc.tryHints")}</div>
                   </div>}
 
                   {/* No results */}
                   {noResults&&<div style={{padding:"24px 14px",textAlign:"center"}}>
                     <Search size={28} color={T.line} style={{margin:"0 auto 10px"}}/>
-                    <div style={{fontSize:13,fontWeight:700,marginBottom:4}}>No results for "{searchQuery}"</div>
-                    <div style={{fontSize:11,color:T.inkMute}}>Try different keywords</div>
+                    <div style={{fontSize:13,fontWeight:700,marginBottom:4}}>{t("misc.noResultsFor")} "{searchQuery}"</div>
+                    <div style={{fontSize:11,color:T.inkMute}}>{t("misc.tryDifferent")}</div>
                   </div>}
 
                   {/* Places */}
                   {matchedAtt.length>0&&<div>
-                    <div style={{padding:"4px 16px 6px",fontSize:10,fontWeight:700,color:T.inkMute,textTransform:"uppercase",letterSpacing:"0.08em"}}>🏛️ Places · {matchedAtt.length}</div>
+                    <div style={{padding:"4px 16px 6px",fontSize:10,fontWeight:700,color:T.inkMute,textTransform:"uppercase",letterSpacing:"0.08em"}}>🏛️ {t("misc.places")} · {matchedAtt.length}</div>
                     {matchedAtt.map(a=><div key={a.id} onMouseDown={(e)=>{e.preventDefault();e.stopPropagation();setPreviewAtt(a);setSearchQuery("");setSearchFocused(false);document.activeElement?.blur()}} style={{display:"flex",alignItems:"center",gap:10,padding:"10px 16px",cursor:"pointer",borderBottom:`1px solid ${T.line}`}}>
                       <img src={a.img} alt={a.title} style={{width:40,height:40,borderRadius:10,objectFit:"cover",flexShrink:0}}/>
                       <div style={{flex:1,minWidth:0}}>
                         <div style={{fontSize:13,fontWeight:700}}>{a.title}</div>
-                        <div style={{fontSize:10,color:T.inkMute,marginTop:1}}>{a.cat} · {a.area} {a.price>0?`· €${a.price}`:"· Free"}</div>
+                        <div style={{fontSize:10,color:T.inkMute,marginTop:1}}>{a.cat} · {a.area} {a.price>0?`· €${a.price}`:`· ${t("card.free")}`}</div>
                       </div>
                       <ChevronRight size={14} color={T.inkMute}/>
                     </div>)}
@@ -408,12 +451,12 @@ export default function IstanbulGo(){
 
                   {/* Guides */}
                   {matchedGuide.length>0&&<div>
-                    <div style={{padding:"8px 16px 6px",fontSize:10,fontWeight:700,color:T.inkMute,textTransform:"uppercase",letterSpacing:"0.08em"}}>📖 Guides · {matchedGuide.length}</div>
+                    <div style={{padding:"8px 16px 6px",fontSize:10,fontWeight:700,color:T.inkMute,textTransform:"uppercase",letterSpacing:"0.08em"}}>📖 {t("home.guides")} · {matchedGuide.length}</div>
                     {matchedGuide.map(g=><div key={g.id} onMouseDown={(e)=>{e.preventDefault();e.stopPropagation();goTab("explore");setGuideId(g.id);setSearchQuery("");setSearchFocused(false);document.activeElement?.blur()}} style={{display:"flex",alignItems:"center",gap:10,padding:"10px 16px",cursor:"pointer",borderBottom:`1px solid ${T.line}`}}>
                       <div style={{width:36,height:36,borderRadius:10,background:"#F1F5F9",display:"flex",alignItems:"center",justifyContent:"center",fontSize:18,flexShrink:0}}>{g.emoji}</div>
                       <div style={{flex:1,minWidth:0}}>
-                        <div style={{fontSize:13,fontWeight:700}}>{g.title}</div>
-                        <div style={{fontSize:10,color:T.inkMute,marginTop:1}}>{g.sub}</div>
+                        <div style={{fontSize:13,fontWeight:700}}>{t(GUIDE_KEYS[g.id]?.title||"")||g.title}</div>
+                        <div style={{fontSize:10,color:T.inkMute,marginTop:1}}>{t(GUIDE_KEYS[g.id]?.sub||"")||g.sub}</div>
                       </div>
                       <ChevronRight size={14} color={T.inkMute}/>
                     </div>)}
@@ -421,7 +464,7 @@ export default function IstanbulGo(){
 
                   {/* Quick actions */}
                   {matchedQA.length>0&&<div>
-                    <div style={{padding:"8px 16px 6px",fontSize:10,fontWeight:700,color:T.inkMute,textTransform:"uppercase",letterSpacing:"0.08em"}}>🧭 Quick access · {matchedQA.length}</div>
+                    <div style={{padding:"8px 16px 6px",fontSize:10,fontWeight:700,color:T.inkMute,textTransform:"uppercase",letterSpacing:"0.08em"}}>🧭 {t("home.quickAccess")} · {matchedQA.length}</div>
                     {matchedQA.map(qa=><div key={qa.id} onMouseDown={(e)=>{e.preventDefault();e.stopPropagation();if(qa.id==="transport")setTransOpen(true);else if(qa.id==="esim")setEsimOpen(true);else goTab(qa.id);setSearchQuery("");setSearchFocused(false);document.activeElement?.blur()}} style={{display:"flex",alignItems:"center",gap:10,padding:"10px 16px",cursor:"pointer"}}>
                       <div style={{width:36,height:36,borderRadius:10,background:T.primarySoft,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}><Compass size={16} color={T.primary}/></div>
                       <div style={{flex:1,minWidth:0}}>
@@ -438,26 +481,26 @@ export default function IstanbulGo(){
 
           {/* ── HOME ── */}
           {tab==="home"&&!infoPage&&<>
-            {planResult&&<div onClick={()=>{goTab("plan");setPlanStep(4)}} style={{overflow:"hidden",borderRadius:24,marginBottom:24,cursor:"pointer",position:"relative",background:`linear-gradient(135deg,${T.dark},#16233B)`,padding:20,color:"white"}}><div style={{position:"absolute",inset:0,opacity:0.06,backgroundImage:"radial-gradient(circle at 1px 1px,white 0.5px,transparent 0)",backgroundSize:"18px 18px"}}/><div style={{position:"relative",display:"flex",alignItems:"center",gap:14}}><div style={{width:52,height:52,borderRadius:18,background:"rgba(29,78,216,0.3)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}><Sparkles size={22} color={T.gold} strokeWidth={1.5}/></div><div style={{flex:1}}><div style={{fontSize:10,fontWeight:600,textTransform:"uppercase",letterSpacing:"0.12em",color:T.gold,marginBottom:4}}>Ready for you</div><div style={{fontSize:16,fontWeight:700}}>Your {planDays}-day itinerary</div></div><ChevronRight size={20} color="rgba(255,255,255,0.3)"/></div></div>}
+            {planResult&&<div onClick={()=>{goTab("plan");setPlanStep(4)}} style={{overflow:"hidden",borderRadius:24,marginBottom:24,cursor:"pointer",position:"relative",background:`linear-gradient(135deg,${T.dark},#16233B)`,padding:20,color:"white"}}><div style={{position:"absolute",inset:0,opacity:0.06,backgroundImage:"radial-gradient(circle at 1px 1px,white 0.5px,transparent 0)",backgroundSize:"18px 18px"}}/><div style={{position:"relative",display:"flex",alignItems:"center",gap:14}}><div style={{width:52,height:52,borderRadius:18,background:"rgba(29,78,216,0.3)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}><Sparkles size={22} color={T.gold} strokeWidth={1.5}/></div><div style={{flex:1}}><div style={{fontSize:10,fontWeight:600,textTransform:"uppercase",letterSpacing:"0.12em",color:T.gold,marginBottom:4}}>{t("plan.yourPlan")}</div><div style={{fontSize:16,fontWeight:700}}>{planDays} {planDays===1?t("plan.dayInIstanbul"):t("plan.daysInIstanbul")}</div></div><ChevronRight size={20} color="rgba(255,255,255,0.3)"/></div></div>}
 
             {/* Quick Actions */}
             {/* Quick access — visual hero + grid */}
             <div style={{marginBottom:28}}>
-              <Lbl>Quick access</Lbl>
-              <Hd>Everything you need</Hd>
+              <Lbl>{t("home.quickAccess")}</Lbl>
+              <Hd>{t("home.everythingYouNeed")}</Hd>
 
               {/* HERO — Smart Plan */}
               <div onClick={()=>goTab("plan")} style={{position:"relative",borderRadius:28,overflow:"hidden",cursor:"pointer",marginBottom:14,height:220}}>
                 <img src="/qa-hero-plan.jpg" alt="Smart Plan" style={{width:"100%",height:"100%",objectFit:"cover",display:"block"}}/>
                 <div style={{position:"absolute",inset:0,background:"linear-gradient(to top, rgba(11,18,32,0.75) 0%, rgba(11,18,32,0.2) 50%, transparent 100%)"}}/>
                 {/* Badge */}
-                <div style={{position:"absolute",top:14,left:14,background:"rgba(255,255,255,0.92)",backdropFilter:"blur(10px)",padding:"5px 12px",borderRadius:99,fontSize:11,fontWeight:700,color:T.dark}}>New</div>
+                <div style={{position:"absolute",top:14,left:14,background:"rgba(255,255,255,0.92)",backdropFilter:"blur(10px)",padding:"5px 12px",borderRadius:99,fontSize:11,fontWeight:700,color:T.dark}}>{t("badge.new")}</div>
                 {/* Content */}
                 <div style={{position:"absolute",bottom:0,left:0,right:0,padding:18}}>
-                  <div style={{fontSize:24,fontWeight:800,color:"white",fontFamily:fd,letterSpacing:"-0.03em"}}>Smart Plan</div>
-                  <div style={{fontSize:12,color:"rgba(255,255,255,0.85)",marginTop:4,lineHeight:1.4}}>Build your Istanbul route in minutes</div>
+                  <div style={{fontSize:24,fontWeight:800,color:"white",fontFamily:fd,letterSpacing:"-0.03em"}}>{t("home.smartPlan")}</div>
+                  <div style={{fontSize:12,color:"rgba(255,255,255,0.85)",marginTop:4,lineHeight:1.4}}>{t("home.smartPlanSub")}</div>
                   <div style={{display:"inline-flex",alignItems:"center",gap:6,marginTop:12,padding:"8px 14px",borderRadius:99,background:"white",fontSize:12,fontWeight:700,color:T.dark}}>
-                    <Sparkles size={12}/>Start planning →
+                    <Sparkles size={12}/>{t("home.startPlanning")} →
                   </div>
                 </div>
               </div>
@@ -465,12 +508,12 @@ export default function IstanbulGo(){
               {/* GRID — 6 cards 3×2 */}
               <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:10}}>
                 {[
-                  {title:"Tickets",sub:"Top sights, skip-the-line",img:"/qa-tickets.jpg",badge:"Popular",tap:()=>goTab("book")},
-                  {title:"Transport",sub:"Metro, tram, ferry",img:"/qa-transport.jpg",badge:"Essential",tap:()=>setTransOpen(true)},
-                  {title:"eSIM",sub:"Online as you land",img:"/qa-esim.jpg",badge:"Travel hack",tap:()=>setEsimOpen(true)},
-                  {title:"Guides",sub:"Hidden gems, local spots",img:"/qa-guides.jpg",badge:"Editor's pick",tap:()=>goTab("explore")},
-                  {title:"Airport",sub:"Transfers & arrival tips",img:"/qa-airport.jpg",badge:"Arrival",tap:()=>setInfoPage("airport")},
-                  {title:"Weather",sub:"Forecast & what to wear",img:"/qa-weather.jpg",badge:"Live",tap:()=>setInfoPage("live")},
+                  {title:t("home.tickets"),sub:t("home.ticketsSub"),img:"/qa-tickets.jpg",badge:t("badge.popular"),tap:()=>goTab("book")},
+                  {title:t("home.transport"),sub:t("home.transportSub"),img:"/qa-transport.jpg",badge:t("badge.essential"),tap:()=>setTransOpen(true)},
+                  {title:t("home.esim"),sub:t("home.esimSub"),img:"/qa-esim.jpg",badge:t("badge.travelHack"),tap:()=>setEsimOpen(true)},
+                  {title:t("home.guides"),sub:t("home.guidesSub"),img:"/qa-guides.jpg",badge:t("badge.editorsPick"),tap:()=>goTab("explore")},
+                  {title:t("home.airport"),sub:t("home.airportSub"),img:"/qa-airport.jpg",badge:t("badge.arrival"),tap:()=>setInfoPage("airport")},
+                  {title:t("home.weather"),sub:t("home.weatherSub"),img:"/qa-weather.jpg",badge:t("badge.live"),tap:()=>setInfoPage("live")},
                 ].map(c=>(
                   <div key={c.title} onClick={c.tap} style={{position:"relative",aspectRatio:"1",borderRadius:20,overflow:"hidden",cursor:"pointer"}}>
                     <img src={c.img} alt={c.title} style={{width:"100%",height:"100%",objectFit:"cover",display:"block"}}/>
@@ -492,8 +535,8 @@ export default function IstanbulGo(){
               <div onClick={()=>setPremiumOpen(true)} style={{borderRadius:20,background:"white",border:`1px solid ${T.line}`,padding:16,marginBottom:28,cursor:"pointer",display:"flex",alignItems:"center",gap:12}}>
                 <div style={{width:40,height:40,borderRadius:12,background:"#FBF5EB",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,fontSize:18}}>☀️</div>
                 <div style={{flex:1}}>
-                  <div style={{fontSize:13,fontWeight:700,color:T.ink}}>Daily Briefing</div>
-                  <div style={{fontSize:11,color:T.inkMute,marginTop:2}}>Personal daily plan, crowd alerts & tips</div>
+                  <div style={{fontSize:13,fontWeight:700,color:T.ink}}>{t("home.dailyBriefing")}</div>
+                  <div style={{fontSize:11,color:T.inkMute,marginTop:2}}>{t("home.dailyBriefingSub")}</div>
                 </div>
                 <span style={{fontSize:10,color:"#C59D5F"}}>🔒</span>
               </div>
@@ -501,7 +544,7 @@ export default function IstanbulGo(){
 
             {/* Must-See — horizontal scroll, image tıklanınca mini preview */}
             <div style={{marginBottom:28}}>
-              <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-end",marginBottom:16}}><div><Lbl>Don't miss these</Lbl><div style={{fontSize:22,fontWeight:800,letterSpacing:"-0.03em",fontFamily:fd}}>Must-See Places</div></div><span onClick={()=>{goTab("explore");setGuideId("must-see")}} style={{fontSize:12,fontWeight:600,color:T.primary,cursor:"pointer"}}>Open guide →</span></div>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-end",marginBottom:16}}><div><Lbl>{t("home.mustSeeSub")}</Lbl><div style={{fontSize:22,fontWeight:800,letterSpacing:"-0.03em",fontFamily:fd}}>{t("home.mustSee")}</div></div><span onClick={()=>{goTab("explore");setGuideId("must-see")}} style={{fontSize:12,fontWeight:600,color:T.primary,cursor:"pointer"}}>{t("home.openGuide")} →</span></div>
               <div style={{display:"flex",gap:12,overflowX:"auto",paddingBottom:8,marginRight:-20}}>
                 {["hagia","basilica","topkapi","galata","dolma","maiden"].map(id=>ATT.find(a=>a.id===id)).filter(Boolean).map(a=><div key={a.id} style={{minWidth:220,overflow:"hidden",borderRadius:22,border:`1px solid ${T.line}`,background:"white",flexShrink:0}}>
                   <div onClick={()=>setPreviewAtt(a)} style={{position:"relative",height:140,overflow:"hidden",cursor:"pointer"}}>
@@ -512,10 +555,10 @@ export default function IstanbulGo(){
                     <div onClick={e=>{e.stopPropagation();toggleFav(a.id)}} style={{position:"absolute",top:10,right:10,width:28,height:28,borderRadius:10,background:favs.has(a.id)?"rgba(225,29,72,0.9)":"rgba(0,0,0,0.25)",display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer"}}><Heart size={12} color="white" fill={favs.has(a.id)?"white":"none"}/></div>
                   </div>
                   <div style={{padding:"10px 12px 12px",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-                    <div><div style={{fontSize:11,color:T.inkMute}}>From</div><div style={{fontSize:18,fontWeight:800}}>€{a.price}</div></div>
+                    <div><div style={{fontSize:11,color:T.inkMute}}>{t("card.from")}</div><div style={{fontSize:18,fontWeight:800}}>€{a.price}</div></div>
                     <div style={{display:"flex",alignItems:"center",gap:6}}>
-                      <span onClick={()=>setDetailAtt(a)} style={{fontSize:11,fontWeight:600,color:T.primary,cursor:"pointer",borderBottom:`1px solid ${T.primarySoft}`}}>details</span>
-                      <div onClick={(e)=>{e.stopPropagation();handleBook(a)}} style={{display:"flex",alignItems:"center",gap:4,height:36,padding:"0 14px",borderRadius:12,background:"linear-gradient(135deg,#1D4ED8,#1E40AF)",color:"white",fontSize:12,fontWeight:700,cursor:"pointer",boxShadow:"0 2px 8px rgba(29,78,216,0.2)"}}>Book</div>
+                      <span onClick={()=>setDetailAtt(a)} style={{fontSize:11,fontWeight:600,color:T.primary,cursor:"pointer",borderBottom:`1px solid ${T.primarySoft}`}}>{t("card.details")}</span>
+                      <div onClick={(e)=>{e.stopPropagation();handleBook(a)}} style={{display:"flex",alignItems:"center",gap:4,height:36,padding:"0 14px",borderRadius:12,background:"linear-gradient(135deg,#1D4ED8,#1E40AF)",color:"white",fontSize:12,fontWeight:700,cursor:"pointer",boxShadow:"0 2px 8px rgba(29,78,216,0.2)"}}>{t("card.book")}</div>
                     </div>
                   </div>
                 </div>)}
@@ -524,7 +567,7 @@ export default function IstanbulGo(){
 
             {/* Hidden Gems */}
             <div style={{marginBottom:28}}>
-              <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-end",marginBottom:16}}><div><Lbl>Beyond the obvious</Lbl><div style={{fontSize:22,fontWeight:800,letterSpacing:"-0.03em",fontFamily:fd}}>Hidden Gems</div></div><span onClick={()=>{goTab("explore");setGuideId("hidden-gems")}} style={{fontSize:12,fontWeight:600,color:T.primary,cursor:"pointer"}}>Open guide →</span></div>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-end",marginBottom:16}}><div><Lbl>{t("home.hiddenGemsSub")}</Lbl><div style={{fontSize:22,fontWeight:800,letterSpacing:"-0.03em",fontFamily:fd}}>{t("home.hiddenGems")}</div></div><span onClick={()=>{goTab("explore");setGuideId("hidden-gems")}} style={{fontSize:12,fontWeight:600,color:T.primary,cursor:"pointer"}}>{t("home.openGuide")} →</span></div>
               <div style={{display:"flex",gap:12,overflowX:"auto",paddingBottom:8,marginRight:-20}}>
                 {["dervish","balat","pierreloti","camlica","cooking","ortakoy"].map(id=>ATT.find(a=>a.id===id)).filter(Boolean).map(a=><div key={a.id} style={{minWidth:220,overflow:"hidden",borderRadius:22,border:`1px solid ${T.line}`,background:"white",flexShrink:0}}>
                   <div onClick={()=>setPreviewAtt(a)} style={{position:"relative",height:140,overflow:"hidden",cursor:"pointer"}}>
@@ -535,10 +578,10 @@ export default function IstanbulGo(){
                     <div onClick={e=>{e.stopPropagation();toggleFav(a.id)}} style={{position:"absolute",top:10,right:10,width:28,height:28,borderRadius:10,background:favs.has(a.id)?"rgba(225,29,72,0.9)":"rgba(0,0,0,0.25)",display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer"}}><Heart size={12} color="white" fill={favs.has(a.id)?"white":"none"}/></div>
                   </div>
                   <div style={{padding:"10px 12px 12px",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-                    <div><div style={{fontSize:11,color:T.inkMute}}>From</div><div style={{fontSize:18,fontWeight:800}}>€{a.price}</div></div>
+                    <div><div style={{fontSize:11,color:T.inkMute}}>{t("card.from")}</div><div style={{fontSize:18,fontWeight:800}}>€{a.price}</div></div>
                     <div style={{display:"flex",alignItems:"center",gap:6}}>
-                      <span onClick={()=>setDetailAtt(a)} style={{fontSize:11,fontWeight:600,color:T.primary,cursor:"pointer",borderBottom:`1px solid ${T.primarySoft}`}}>details</span>
-                      <div onClick={(e)=>{e.stopPropagation();handleBook(a)}} style={{display:"flex",alignItems:"center",gap:4,height:36,padding:"0 14px",borderRadius:12,background:"linear-gradient(135deg,#1D4ED8,#1E40AF)",color:"white",fontSize:12,fontWeight:700,cursor:"pointer",boxShadow:"0 2px 8px rgba(29,78,216,0.2)"}}>Book</div>
+                      <span onClick={()=>setDetailAtt(a)} style={{fontSize:11,fontWeight:600,color:T.primary,cursor:"pointer",borderBottom:`1px solid ${T.primarySoft}`}}>{t("card.details")}</span>
+                      <div onClick={(e)=>{e.stopPropagation();handleBook(a)}} style={{display:"flex",alignItems:"center",gap:4,height:36,padding:"0 14px",borderRadius:12,background:"linear-gradient(135deg,#1D4ED8,#1E40AF)",color:"white",fontSize:12,fontWeight:700,cursor:"pointer",boxShadow:"0 2px 8px rgba(29,78,216,0.2)"}}>{t("card.book")}</div>
                     </div>
                   </div>
                 </div>)}
@@ -546,19 +589,19 @@ export default function IstanbulGo(){
             </div>
 
             {/* eSIM */}
-            <div style={{borderRadius:20,background:T.dark,padding:"16px 18px",marginBottom:28,display:"flex",alignItems:"center",gap:14,cursor:"pointer"}} onClick={()=>setEsimOpen(true)}><div style={{width:44,height:44,borderRadius:14,background:"rgba(255,255,255,0.08)",display:"flex",alignItems:"center",justifyContent:"center"}}><Wifi size={20} color="#A78BFA"/></div><div style={{flex:1}}><div style={{fontSize:14,fontWeight:600,color:"white"}}>Stay connected</div><div style={{fontSize:12,color:"rgba(255,255,255,0.5)",marginTop:2}}>Get your eSIM before you land — from €4.99</div></div><ChevronRight size={16} color="rgba(255,255,255,0.3)"/></div>
+            <div style={{borderRadius:20,background:T.dark,padding:"16px 18px",marginBottom:28,display:"flex",alignItems:"center",gap:14,cursor:"pointer"}} onClick={()=>setEsimOpen(true)}><div style={{width:44,height:44,borderRadius:14,background:"rgba(255,255,255,0.08)",display:"flex",alignItems:"center",justifyContent:"center"}}><Wifi size={20} color="#A78BFA"/></div><div style={{flex:1}}><div style={{fontSize:14,fontWeight:600,color:"white"}}>{t("menu.esimDataSub")}</div><div style={{fontSize:12,color:"rgba(255,255,255,0.5)",marginTop:2}}>{t("home.esimSub")} — €4.99</div></div><ChevronRight size={16} color="rgba(255,255,255,0.3)"/></div>
 
             {/* Info Cards */}
-            <Lbl>Your local friend</Lbl><Hd>Know before you go</Hd>
-            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>{[{k:"airport",Icon:Plane,t:"Airport Guide",d:"Transfers, routes, tips"},{k:"money",Icon:Wallet,t:"Money & Tips",d:"Currency, ATMs, haggling"},{k:"phrases",Icon:Languages,t:"Turkish Phrases",d:"Tap to copy essentials"},{k:"safety",Icon:ShieldCheck,t:"Safety Guide",d:"Scams & street smarts"},{k:"esim",Icon:Smartphone,t:"eSIM Setup",d:"Install before landing"},{k:"live",Icon:Globe,t:"Live Info",d:"Weather, closures, ferries"}].map(c=><div key={c.k} onClick={()=>c.k==="esim"?setEsimOpen(true):setInfoPage(c.k)} style={{borderRadius:22,border:`1px solid ${T.line}`,background:"white",padding:16,cursor:"pointer"}}><div style={{width:44,height:44,borderRadius:16,background:"#F1F5F9",display:"flex",alignItems:"center",justifyContent:"center",marginBottom:12}}><c.Icon size={20} color={T.ink} strokeWidth={1.7}/></div><div style={{fontSize:14,fontWeight:700}}>{c.t}</div><div style={{fontSize:12,color:T.inkMute,marginTop:4}}>{c.d}</div><div style={{marginTop:8,fontSize:12,fontWeight:600,color:T.primary,display:"flex",alignItems:"center",gap:4}}>Open<ChevronRight size={12}/></div></div>)}</div>
+            <Lbl>{t("home.localFriend")}</Lbl><Hd>{t("home.knowBefore")}</Hd>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>{[{k:"airport",Icon:Plane,t:t("info.airport"),d:t("info.airportSub")},{k:"money",Icon:Wallet,t:t("info.money"),d:t("info.moneySub")},{k:"phrases",Icon:Languages,t:t("info.phrases"),d:t("info.phrasesSub")},{k:"safety",Icon:ShieldCheck,t:t("info.safety"),d:t("info.safetySub")},{k:"esim",Icon:Smartphone,t:t("home.esim"),d:t("home.esimSub")},{k:"live",Icon:Globe,t:t("info.live"),d:t("info.liveSub")}].map(c=><div key={c.k} onClick={()=>c.k==="esim"?setEsimOpen(true):setInfoPage(c.k)} style={{borderRadius:22,border:`1px solid ${T.line}`,background:"white",padding:16,cursor:"pointer"}}><div style={{width:44,height:44,borderRadius:16,background:"#F1F5F9",display:"flex",alignItems:"center",justifyContent:"center",marginBottom:12}}><c.Icon size={20} color={T.ink} strokeWidth={1.7}/></div><div style={{fontSize:14,fontWeight:700}}>{c.t}</div><div style={{fontSize:12,color:T.inkMute,marginTop:4}}>{c.d}</div><div style={{marginTop:8,fontSize:12,fontWeight:600,color:T.primary,display:"flex",alignItems:"center",gap:4}}>{t("btn.open")}<ChevronRight size={12}/></div></div>)}</div>
           </>}
 
           {/* ── INFO PAGES ── */}
-          {tab==="home"&&infoPage==="airport"&&<div><div style={{display:"flex",alignItems:"center",gap:12,marginBottom:20}}><Bk onClick={()=>setInfoPage(null)}/><div><Lbl>Guide</Lbl><div style={{fontSize:24,fontWeight:800,fontFamily:fd}}>Airport to Hotel</div></div></div>{[{Icon:Car,t:"Private Transfer",d:"Door-to-door",p:"€35-45",b:"Fastest",tone:T.primarySoft,ac:T.primary},{Icon:Bus,t:"Havaist Bus",d:"Every 30min, IST ↔ Taksim",p:"€12",b:"Best value",tone:T.okSoft,ac:T.ok},{Icon:Train,t:"Metro M11",d:"IST → Gayrettepe",p:"~€1",b:"Cheapest",tone:T.warnSoft,ac:T.warn}].map(o=><div key={o.t} style={{borderRadius:20,background:"white",border:`1px solid ${T.line}`,padding:16,marginBottom:12,display:"flex",alignItems:"center",gap:14}}><div style={{width:52,height:52,borderRadius:16,background:o.tone,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}><o.Icon size={22} color={o.ac}/></div><div style={{flex:1}}><div style={{display:"flex",alignItems:"center",gap:6}}><span style={{fontSize:15,fontWeight:700}}>{o.t}</span><span style={{fontSize:9,fontWeight:600,background:o.tone,color:o.ac,padding:"2px 7px",borderRadius:6}}>{o.b}</span></div><div style={{fontSize:12,color:T.inkMute}}>{o.d}</div></div><div style={{fontSize:18,fontWeight:800}}>{o.p}</div></div>)}</div>}
-          {tab==="home"&&infoPage==="phrases"&&<div><div style={{display:"flex",alignItems:"center",gap:12,marginBottom:20}}><Bk onClick={()=>setInfoPage(null)}/><div><Lbl>Guide</Lbl><div style={{fontSize:24,fontWeight:800,fontFamily:fd}}>Turkish Phrases</div></div></div>{[{title:"Essentials",phrases:[{en:"Hello",tr:"Merhaba",pr:"mer-HA-ba"},{en:"Thank you",tr:"Teşekkürler",pr:"teh-shek-KOOR-ler"},{en:"Yes / No",tr:"Evet / Hayır",pr:"eh-VET / ha-YIR"},{en:"Please",tr:"Lütfen",pr:"LOOT-fen"},{en:"How much?",tr:"Ne kadar?",pr:"neh ka-DAR"},{en:"The check",tr:"Hesap lütfen",pr:"heh-SAP loot-FEN"}]}].map(g=><div key={g.title} style={{marginBottom:20}}><div style={{fontSize:13,fontWeight:700,marginBottom:10}}>{g.title}</div><div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>{g.phrases.map((p,i)=>{const id=g.title+i;const cp=copied===id;return<div key={i} onClick={()=>doCopy(p.tr,id)} style={{borderRadius:16,background:cp?T.okSoft:"white",border:`1px solid ${cp?T.ok+"40":T.line}`,padding:"12px 14px",cursor:"pointer"}}><div style={{display:"flex",justifyContent:"space-between",marginBottom:4}}><span style={{fontSize:11,color:T.inkMute}}>{p.en}</span>{cp?<Check size={12} color={T.ok}/>:<Copy size={12} color={T.inkMute}/>}</div><div style={{fontSize:16,fontWeight:700}}>{p.tr}</div><div style={{fontSize:10,color:T.inkMute,marginTop:2,fontStyle:"italic"}}>{p.pr}</div></div>})}</div></div>)}</div>}
-          {tab==="home"&&infoPage==="safety"&&<div><div style={{display:"flex",alignItems:"center",gap:12,marginBottom:20}}><Bk onClick={()=>setInfoPage(null)}/><div><Lbl>Guide</Lbl><div style={{fontSize:24,fontWeight:800,fontFamily:fd}}>Safety & Scams</div></div></div>{[{t:"Shoe-shine trick",d:"Drop brush near you, charge €20",a:"Ignore & walk"},{t:"Friendly bar invite",d:"Stranger → bar → €500 bill",a:"Never follow strangers"},{t:"Taxi meter off",d:"Driver skips meter",a:"Use BiTaksi app"}].map(s=><div key={s.t} style={{borderRadius:18,background:T.dangerSoft,padding:16,marginBottom:10,borderLeft:`4px solid ${T.danger}`}}><div style={{display:"flex",alignItems:"center",gap:6,marginBottom:4}}><AlertTriangle size={14} color={T.danger}/><span style={{fontSize:14,fontWeight:700}}>{s.t}</span></div><div style={{fontSize:12,color:T.inkSoft,marginBottom:8}}>{s.d}</div><div style={{fontSize:12,fontWeight:600,color:T.ok,display:"flex",alignItems:"center",gap:4}}><CheckCircle size={12}/>{s.a}</div></div>)}</div>}
+          {tab==="home"&&infoPage==="airport"&&<div><div style={{display:"flex",alignItems:"center",gap:12,marginBottom:20}}><Bk onClick={()=>setInfoPage(null)}/><div><Lbl>{t("info.airportGuide")}</Lbl><div style={{fontSize:24,fontWeight:800,fontFamily:fd}}>{t("info.airportTitle")}</div></div></div>{[{Icon:Car,t:t("info.airport.private.name"),d:t("info.airport.private.desc"),p:t("info.airport.private.price"),b:t("info.airport.private.badge"),tone:T.primarySoft,ac:T.primary},{Icon:Bus,t:t("info.airport.bus.name"),d:t("info.airport.bus.desc"),p:t("info.airport.bus.price"),b:t("info.airport.bus.badge"),tone:T.okSoft,ac:T.ok},{Icon:Train,t:t("info.airport.metro.name"),d:t("info.airport.metro.desc"),p:t("info.airport.metro.price"),b:t("info.airport.metro.badge"),tone:T.warnSoft,ac:T.warn}].map(o=><div key={o.t} style={{borderRadius:20,background:"white",border:`1px solid ${T.line}`,padding:16,marginBottom:12,display:"flex",alignItems:"center",gap:14}}><div style={{width:52,height:52,borderRadius:16,background:o.tone,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}><o.Icon size={22} color={o.ac}/></div><div style={{flex:1}}><div style={{display:"flex",alignItems:"center",gap:6}}><span style={{fontSize:15,fontWeight:700}}>{o.t}</span><span style={{fontSize:9,fontWeight:600,background:o.tone,color:o.ac,padding:"2px 7px",borderRadius:6}}>{o.b}</span></div><div style={{fontSize:12,color:T.inkMute}}>{o.d}</div></div><div style={{fontSize:18,fontWeight:800}}>{o.p}</div></div>)}</div>}
+          {tab==="home"&&infoPage==="phrases"&&<div><div style={{display:"flex",alignItems:"center",gap:12,marginBottom:20}}><Bk onClick={()=>setInfoPage(null)}/><div><Lbl>{t("info.airportGuide")}</Lbl><div style={{fontSize:24,fontWeight:800,fontFamily:fd}}>{t("info.phrasesTitle")}</div></div></div>{[{title:t("info.phrases.essentials"),phrases:[{en:t("info.phrases.hello"),tr:"Merhaba",pr:"mer-HA-ba"},{en:t("info.phrases.thanks"),tr:"Teşekkürler",pr:"teh-shek-KOOR-ler"},{en:t("info.phrases.yesno"),tr:"Evet / Hayır",pr:"eh-VET / ha-YIR"},{en:t("info.phrases.please"),tr:"Lütfen",pr:"LOOT-fen"},{en:t("info.phrases.howmuch"),tr:"Ne kadar?",pr:"neh ka-DAR"},{en:t("info.phrases.check"),tr:"Hesap lütfen",pr:"heh-SAP loot-FEN"}]}].map(g=><div key={g.title} style={{marginBottom:20}}><div style={{fontSize:13,fontWeight:700,marginBottom:10}}>{g.title}</div><div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>{g.phrases.map((p,i)=>{const id=g.title+i;const cp=copied===id;return<div key={i} onClick={()=>doCopy(p.tr,id)} style={{borderRadius:16,background:cp?T.okSoft:"white",border:`1px solid ${cp?T.ok+"40":T.line}`,padding:"12px 14px",cursor:"pointer"}}><div style={{display:"flex",justifyContent:"space-between",marginBottom:4}}><span style={{fontSize:11,color:T.inkMute}}>{p.en}</span>{cp?<Check size={12} color={T.ok}/>:<Copy size={12} color={T.inkMute}/>}</div><div style={{fontSize:16,fontWeight:700}}>{p.tr}</div><div style={{fontSize:10,color:T.inkMute,marginTop:2,fontStyle:"italic"}}>{p.pr}</div></div>})}</div></div>)}</div>}
+          {tab==="home"&&infoPage==="safety"&&<div><div style={{display:"flex",alignItems:"center",gap:12,marginBottom:20}}><Bk onClick={()=>setInfoPage(null)}/><div><Lbl>{t("info.airportGuide")}</Lbl><div style={{fontSize:24,fontWeight:800,fontFamily:fd}}>{t("info.safetyTitle")}</div></div></div>{[{t:t("info.safety.shoe.t"),d:t("info.safety.shoe.d"),a:t("info.safety.shoe.a")},{t:t("info.safety.bar.t"),d:t("info.safety.bar.d"),a:t("info.safety.bar.a")},{t:t("info.safety.taxi.t"),d:t("info.safety.taxi.d"),a:t("info.safety.taxi.a")}].map(s=><div key={s.t} style={{borderRadius:18,background:T.dangerSoft,padding:16,marginBottom:10,borderLeft:`4px solid ${T.danger}`}}><div style={{display:"flex",alignItems:"center",gap:6,marginBottom:4}}><AlertTriangle size={14} color={T.danger}/><span style={{fontSize:14,fontWeight:700}}>{s.t}</span></div><div style={{fontSize:12,color:T.inkSoft,marginBottom:8}}>{s.d}</div><div style={{fontSize:12,fontWeight:600,color:T.ok,display:"flex",alignItems:"center",gap:4}}><CheckCircle size={12}/>{s.a}</div></div>)}</div>}
           {tab==="home"&&infoPage==="live"&&<div><div style={{display:"flex",alignItems:"center",gap:12,marginBottom:20}}><Bk onClick={()=>setInfoPage(null)}/><div><Lbl>Live</Lbl><div style={{fontSize:24,fontWeight:800,fontFamily:fd}}>City Info</div></div></div><WeatherWidget/></div>}
-          {tab==="home"&&infoPage==="money"&&<div><div style={{display:"flex",alignItems:"center",gap:12,marginBottom:20}}><Bk onClick={()=>setInfoPage(null)}/><div><Lbl>Guide</Lbl><div style={{fontSize:24,fontWeight:800,fontFamily:fd}}>Money & Payments</div></div></div>{[{Icon:Wallet,t:"Currency",d:"Turkish Lira (₺). €1 ≈ ₺38-40."},{Icon:CreditCard,t:"Cards vs Cash",d:"Visa/MC tourist areas. Bazaar: cash only."},{Icon:Star,t:"Haggling",d:"Start at 40%. Walk away — they call back."}].map(c=><div key={c.t} style={{borderRadius:20,background:"white",border:`1px solid ${T.line}`,padding:16,marginBottom:12,display:"flex",gap:14}}><div style={{width:44,height:44,borderRadius:14,background:"#F1F5F9",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}><c.Icon size={20} color={T.ink}/></div><div><div style={{fontSize:14,fontWeight:700,marginBottom:4}}>{c.t}</div><div style={{fontSize:13,color:T.inkSoft,lineHeight:1.55}}>{c.d}</div></div></div>)}</div>}
+          {tab==="home"&&infoPage==="money"&&<div><div style={{display:"flex",alignItems:"center",gap:12,marginBottom:20}}><Bk onClick={()=>setInfoPage(null)}/><div><Lbl>{t("info.airportGuide")}</Lbl><div style={{fontSize:24,fontWeight:800,fontFamily:fd}}>{t("info.moneyTitle")}</div></div></div>{[{Icon:Wallet,t:t("info.money.currency.t"),d:t("info.money.currency.d")},{Icon:CreditCard,t:t("info.money.cards.t"),d:t("info.money.cards.d")},{Icon:Star,t:t("info.money.haggle.t"),d:t("info.money.haggle.d")}].map(c=><div key={c.t} style={{borderRadius:20,background:"white",border:`1px solid ${T.line}`,padding:16,marginBottom:12,display:"flex",gap:14}}><div style={{width:44,height:44,borderRadius:14,background:"#F1F5F9",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}><c.Icon size={20} color={T.ink}/></div><div><div style={{fontSize:14,fontWeight:700,marginBottom:4}}>{c.t}</div><div style={{fontSize:13,color:T.inkSoft,lineHeight:1.55}}>{c.d}</div></div></div>)}</div>}
 
           {/* ── PLAN ── */}
           {tab==="plan"&&<div>
@@ -566,32 +609,47 @@ export default function IstanbulGo(){
             {planStep===0&&<div>
               <div style={{overflow:"hidden",borderRadius:28,background:`linear-gradient(135deg,${T.dark},#16233B)`,padding:"40px 24px",color:"white",textAlign:"center",marginBottom:20}}>
                 <Sparkles size={40} color={T.gold} strokeWidth={1.2} style={{margin:"0 auto 16px"}}/>
-                <div style={{fontFamily:fd,fontSize:26,fontWeight:800,marginBottom:8}}>Plan the trip, not the chaos</div>
-                <div style={{fontSize:14,color:"rgba(255,255,255,0.6)",lineHeight:1.6}}>Answer 3 quick questions and get a smarter itinerary tailored to your style.</div>
+                <div style={{fontFamily:fd,fontSize:26,fontWeight:800,marginBottom:8}}>{t("plan.title")}</div>
+                <div style={{fontSize:14,color:"rgba(255,255,255,0.6)",lineHeight:1.6}}>{t("plan.subtitle")}</div>
               </div>
               <div onClick={()=>{setPlanStep(1);setPlanDays(null);setPlanPace(null);setPlanInterests([]);setPlanResult(null)}} style={{background:T.primary,color:"white",padding:"16px 0",borderRadius:16,fontWeight:700,fontSize:15,cursor:"pointer",textAlign:"center",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
-                <Sparkles size={16}/>Start Planning
+                <Sparkles size={16}/>{t("plan.startPlanning")}
               </div>
               {/* Free teaser */}
               <div style={{marginTop:24,padding:16,borderRadius:18,background:"#F8FAFC",border:`1px solid ${T.line}`}}>
-                <div style={{fontSize:12,fontWeight:700,color:T.inkMute,textTransform:"uppercase",letterSpacing:"0.06em",marginBottom:8}}>What you get</div>
-                {["A day-by-day itinerary","Balanced route through the city","Tickets & booking links","Map-ready for navigation"].map((f,i)=><div key={i} style={{display:"flex",gap:8,fontSize:13,color:T.inkSoft,padding:"3px 0"}}><Check size={14} color={T.ok}/>{f}</div>)}
+                <div style={{fontSize:12,fontWeight:700,color:T.inkMute,textTransform:"uppercase",letterSpacing:"0.06em",marginBottom:8}}>{t("onboard.what")}</div>
+                {[t("plan.benefit1"),t("plan.benefit2"),t("plan.benefit3"),t("plan.benefit4")].map((f,i)=><div key={i} style={{display:"flex",gap:8,fontSize:13,color:T.inkSoft,padding:"3px 0"}}><Check size={14} color={T.ok}/>{f}</div>)}
               </div>
             </div>}
 
             {/* STEP 1: Days */}
             {planStep===1&&<div>
-              <div onClick={()=>setPlanStep(0)} style={{display:"flex",alignItems:"center",gap:6,fontSize:13,color:T.inkMute,cursor:"pointer",marginBottom:16}}><ArrowLeft size={14}/>Back</div>
-              <Lbl>Step 1 of 3</Lbl>
-              <div style={{fontFamily:fd,fontSize:24,fontWeight:800,marginBottom:8}}>How many days do you have?</div>
-              <div style={{fontSize:13,color:T.inkMute,marginBottom:24}}>Slide to choose — 1 to 7 days.</div>
-              {/* Big number */}
-              <div style={{textAlign:"center",marginBottom:20}}>
-                <div style={{fontSize:72,fontWeight:800,color:T.dark,fontFamily:fd,lineHeight:1,letterSpacing:"-0.04em"}}>{planDays||3}</div>
-                <div style={{fontSize:13,fontWeight:600,color:T.inkMute,marginTop:4}}>{(planDays||3)===1?"day":"days"} in Istanbul</div>
+              <div onClick={()=>setPlanStep(0)} style={{display:"flex",alignItems:"center",gap:6,fontSize:13,color:T.inkMute,cursor:"pointer",marginBottom:16}}><ArrowLeft size={14}/>{t("btn.back")}</div>
+              <Lbl>{t("plan.step")} 1 {t("plan.of")} 3</Lbl>
+              <div style={{fontFamily:fd,fontSize:24,fontWeight:800,marginBottom:8}}>{t("plan.whenGoing")}</div>
+              <div style={{fontSize:13,color:T.inkMute,marginBottom:20}}>{t("plan.whenGoingSub")}</div>
+
+              {/* Date picker */}
+              <div style={{marginBottom:20}}>
+                <div style={{fontSize:11,fontWeight:700,color:T.inkMute,textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:8}}>{t("plan.arrivalDate")}</div>
+                <input
+                  type="date"
+                  value={tripStartDate||""}
+                  min={new Date().toISOString().split("T")[0]}
+                  onChange={(e)=>saveTripStartDate(e.target.value)}
+                  style={{width:"100%",padding:"14px 16px",borderRadius:14,border:`1px solid ${tripStartDate?T.primary:T.line}`,background:tripStartDate?T.primarySoft:"white",fontSize:15,fontWeight:700,color:T.ink,outline:"none",fontFamily:"inherit",boxSizing:"border-box"}}
+                />
+                {tripStartDate&&<div style={{marginTop:6,fontSize:11,color:T.primary,fontWeight:600}}>{new Date(tripStartDate).toLocaleDateString(lang==="ar"?"ar-SA":lang,{weekday:"long",year:"numeric",month:"long",day:"numeric"})}</div>}
+              </div>
+
+              {/* Days */}
+              <div style={{fontSize:11,fontWeight:700,color:T.inkMute,textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:8}}>{t("plan.howManyDays")}</div>
+              <div style={{textAlign:"center",marginBottom:16}}>
+                <div style={{fontSize:64,fontWeight:800,color:T.dark,fontFamily:fd,lineHeight:1,letterSpacing:"-0.04em"}}>{planDays||3}</div>
+                <div style={{fontSize:12,fontWeight:600,color:T.inkMute,marginTop:4}}>{(planDays||3)===1?t("plan.dayInIstanbul"):t("plan.daysInIstanbul")}</div>
               </div>
               {/* Slider */}
-              <div style={{padding:"0 8px",marginBottom:32}}>
+              <div style={{padding:"0 8px",marginBottom:24}}>
                 <input
                   type="range"
                   min="1"
@@ -604,43 +662,43 @@ export default function IstanbulGo(){
                   {[1,2,3,4,5,6,7].map(d=><span key={d} style={{color:d===(planDays||3)?T.primary:T.inkMute}}>{d}</span>)}
                 </div>
               </div>
-              <div onClick={()=>{if(!planDays)setPlanDays(3);setPlanStep(2)}} style={{background:T.primary,color:"white",padding:"14px 0",borderRadius:16,fontWeight:700,textAlign:"center",cursor:"pointer"}}>Continue</div>
+              <div onClick={()=>{if(!planDays)setPlanDays(3);setPlanStep(2)}} style={{background:T.primary,color:"white",padding:"14px 0",borderRadius:16,fontWeight:700,textAlign:"center",cursor:"pointer"}}>{t("btn.continue")}</div>
             </div>}
 
             {/* STEP 2: Pace */}
             {planStep===2&&<div>
-              <div onClick={()=>setPlanStep(1)} style={{display:"flex",alignItems:"center",gap:6,fontSize:13,color:T.inkMute,cursor:"pointer",marginBottom:16}}><ArrowLeft size={14}/>Back</div>
-              <Lbl>Step 2 of 3</Lbl>
-              <div style={{fontFamily:fd,fontSize:24,fontWeight:800,marginBottom:8}}>What's your pace?</div>
-              <div style={{fontSize:13,color:T.inkMute,marginBottom:24}}>How much do you want to squeeze into a day?</div>
+              <div onClick={()=>setPlanStep(1)} style={{display:"flex",alignItems:"center",gap:6,fontSize:13,color:T.inkMute,cursor:"pointer",marginBottom:16}}><ArrowLeft size={14}/>{t("btn.back")}</div>
+              <Lbl>{t("plan.step")} 2 {t("plan.of")} 3</Lbl>
+              <div style={{fontFamily:fd,fontSize:24,fontWeight:800,marginBottom:8}}>{t("plan.whatsPace")}</div>
+              <div style={{fontSize:13,color:T.inkMute,marginBottom:24}}>{t("plan.paceSubtitle")}</div>
               <div style={{display:"flex",flexDirection:"column",gap:10,marginBottom:32}}>
-                {PACES.map(p=><div key={p.id} onClick={()=>setPlanPace(p.id)} style={{borderRadius:18,padding:"16px 18px",cursor:"pointer",display:"flex",alignItems:"center",gap:14,background:planPace===p.id?T.dark:"white",color:planPace===p.id?"white":T.ink,boxShadow:planPace===p.id?"0 6px 20px rgba(11,18,32,0.2)":`0 0 0 1px ${T.line}`}}>
+                {PACES.map(p=>{const label=t(`plan.${p.id}`);const desc=t(`plan.${p.id}Desc`);return(<div key={p.id} onClick={()=>setPlanPace(p.id)} style={{borderRadius:18,padding:"16px 18px",cursor:"pointer",display:"flex",alignItems:"center",gap:14,background:planPace===p.id?T.dark:"white",color:planPace===p.id?"white":T.ink,boxShadow:planPace===p.id?"0 6px 20px rgba(11,18,32,0.2)":`0 0 0 1px ${T.line}`}}>
                   <div style={{fontSize:26}}>{p.icon}</div>
                   <div style={{flex:1}}>
-                    <div style={{fontSize:15,fontWeight:700}}>{p.label}</div>
-                    <div style={{fontSize:12,opacity:0.6,marginTop:2}}>{p.desc}</div>
+                    <div style={{fontSize:15,fontWeight:700}}>{label}</div>
+                    <div style={{fontSize:12,opacity:0.6,marginTop:2}}>{desc}</div>
                   </div>
                   {planPace===p.id&&<Check size={18} color={T.gold}/>}
-                </div>)}
+                </div>)})}
               </div>
-              <div onClick={()=>planPace&&setPlanStep(3)} style={{background:planPace?T.primary:T.line,color:planPace?"white":T.inkMute,padding:"14px 0",borderRadius:16,fontWeight:700,textAlign:"center",cursor:planPace?"pointer":"default"}}>Continue</div>
+              <div onClick={()=>planPace&&setPlanStep(3)} style={{background:planPace?T.primary:T.line,color:planPace?"white":T.inkMute,padding:"14px 0",borderRadius:16,fontWeight:700,textAlign:"center",cursor:planPace?"pointer":"default"}}>{t("btn.continue")}</div>
             </div>}
 
             {/* STEP 3: Interests (multi-select) */}
             {planStep===3&&<div>
-              <div onClick={()=>setPlanStep(2)} style={{display:"flex",alignItems:"center",gap:6,fontSize:13,color:T.inkMute,cursor:"pointer",marginBottom:16}}><ArrowLeft size={14}/>Back</div>
-              <Lbl>Step 3 of 3</Lbl>
-              <div style={{fontFamily:fd,fontSize:24,fontWeight:800,marginBottom:8}}>What excites you?</div>
-              <div style={{fontSize:13,color:T.inkMute,marginBottom:24}}>Pick one or more — we'll mix them into your plan.</div>
+              <div onClick={()=>setPlanStep(2)} style={{display:"flex",alignItems:"center",gap:6,fontSize:13,color:T.inkMute,cursor:"pointer",marginBottom:16}}><ArrowLeft size={14}/>{t("btn.back")}</div>
+              <Lbl>{t("plan.step")} 3 {t("plan.of")} 3</Lbl>
+              <div style={{fontFamily:fd,fontSize:24,fontWeight:800,marginBottom:8}}>{t("plan.interests")}</div>
+              <div style={{fontSize:13,color:T.inkMute,marginBottom:24}}>{t("plan.interestsSub")}</div>
               <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:32}}>
-                {INTERESTS.map(i=>{const on=planInterests.includes(i.id);return<div key={i.id} onClick={()=>setPlanInterests(on?planInterests.filter(x=>x!==i.id):[...planInterests,i.id])} style={{borderRadius:18,padding:"16px 14px",cursor:"pointer",background:on?T.dark:"white",color:on?"white":T.ink,boxShadow:on?"0 6px 20px rgba(11,18,32,0.2)":`0 0 0 1px ${T.line}`,position:"relative"}}>
+                {INTERESTS.map(i=>{const on=planInterests.includes(i.id);const intKey={history:"interestHistory",food:"interestFood",views:"interestViews",shopping:"interestShopping",water:"interestWater",family:"interestFamily"}[i.id]||"interestHistory";const label=t(`plan.${intKey}`);return<div key={i.id} onClick={()=>setPlanInterests(on?planInterests.filter(x=>x!==i.id):[...planInterests,i.id])} style={{borderRadius:18,padding:"16px 14px",cursor:"pointer",background:on?T.dark:"white",color:on?"white":T.ink,boxShadow:on?"0 6px 20px rgba(11,18,32,0.2)":`0 0 0 1px ${T.line}`,position:"relative"}}>
                   <div style={{fontSize:24,marginBottom:6}}>{i.icon}</div>
-                  <div style={{fontSize:12,fontWeight:700,lineHeight:1.3}}>{i.label}</div>
+                  <div style={{fontSize:12,fontWeight:700,lineHeight:1.3}}>{label}</div>
                   {on&&<div style={{position:"absolute",top:10,right:10,width:18,height:18,borderRadius:9,background:T.gold,display:"flex",alignItems:"center",justifyContent:"center"}}><Check size={11} color={T.dark}/></div>}
                 </div>})}
               </div>
-              <div onClick={()=>{const result=generatePlan({days:planDays,pace:planPace,interests:planInterests});setPlanResult(result);setPlanStep(4);setActiveDay(1)}} style={{background:T.dark,color:"white",padding:"16px 0",borderRadius:16,fontWeight:700,textAlign:"center",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
-                <Sparkles size={16}/>Build My Plan
+              <div onClick={()=>{const result=generatePlan({days:planDays,pace:planPace,interests:planInterests,timedTickets,tripStartDate});setPlanResult(result);setPlanStep(4);setActiveDay(1)}} style={{background:T.dark,color:"white",padding:"16px 0",borderRadius:16,fontWeight:700,textAlign:"center",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
+                <Sparkles size={16}/>{t("plan.buildPlan")}
               </div>
             </div>}
 
@@ -666,68 +724,68 @@ export default function IstanbulGo(){
                 <div style={{position:"relative",display:"flex",alignItems:"center",gap:14}}>
                   <div style={{width:48,height:48,borderRadius:16,background:"rgba(197,157,95,0.2)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}><Sparkles size={22} color={T.gold}/></div>
                   <div style={{flex:1}}>
-                    <div style={{fontSize:15,fontWeight:700}}>Want it hyper-personalized?</div>
-                    <div style={{fontSize:12,color:"rgba(255,255,255,0.55)",marginTop:3}}>Premium planner adds hotel-based routing, live crowds, and photo timing.</div>
+                    <div style={{fontSize:15,fontWeight:700}}>{t("premium.upsellTitle")}</div>
+                    <div style={{fontSize:12,color:"rgba(255,255,255,0.55)",marginTop:3}}>{t("premium.upsellSub")}</div>
                   </div>
                 </div>
-                <div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:6,marginTop:14,padding:"11px 0",borderRadius:14,background:"rgba(197,157,95,0.2)",fontSize:13,fontWeight:700,color:T.gold}}>🔒 Unlock AI Planner · €4.99</div>
+                <div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:6,marginTop:14,padding:"11px 0",borderRadius:14,background:"rgba(197,157,95,0.2)",fontSize:13,fontWeight:700,color:T.gold}}>🔒 {t("premium.unlock")} · €4.99</div>
               </div>}
             </>}
           </div>}
 
           {/* ── BOOK ── */}
-          {tab==="book"&&<div><div style={{display:"flex",alignItems:"center",gap:12,marginBottom:20}}><Bk onClick={()=>goTab("home")}/><div><Lbl>Commerce</Lbl><div style={{fontSize:24,fontWeight:800,fontFamily:fd}}>Tickets & Passes</div></div></div><div style={{display:"flex",gap:6,overflowX:"auto",marginBottom:16}}>{cats.map(c=><div key={c} onClick={()=>setBookFilter(c)} style={{padding:"7px 14px",borderRadius:99,fontSize:12,fontWeight:600,cursor:"pointer",whiteSpace:"nowrap",background:bookFilter===c?T.dark:"white",color:bookFilter===c?"white":T.inkSoft,border:bookFilter===c?"none":`1px solid ${T.line}`}}>{c}</div>)}</div><Lbl>{filteredATT.length} results</Lbl>{filteredATT.map(a=><div key={a.id} onClick={()=>setPreviewAtt(a)} style={{display:"flex",alignItems:"center",gap:12,borderRadius:22,background:"white",border:`1px solid ${myTickets.includes(a.id)?T.ok+"55":T.line}`,padding:12,marginBottom:12,cursor:"pointer",position:"relative"}}>
+          {tab==="book"&&<div><div style={{display:"flex",alignItems:"center",gap:12,marginBottom:20}}><Bk onClick={()=>goTab("home")}/><div><Lbl>{t("book.subtitle")}</Lbl><div style={{fontSize:24,fontWeight:800,fontFamily:fd}}>{t("book.title")}</div></div></div><div style={{display:"flex",gap:6,overflowX:"auto",marginBottom:16}}>{cats.map(c=><div key={c} onClick={()=>setBookFilter(c)} style={{padding:"7px 14px",borderRadius:99,fontSize:12,fontWeight:600,cursor:"pointer",whiteSpace:"nowrap",background:bookFilter===c?T.dark:"white",color:bookFilter===c?"white":T.inkSoft,border:bookFilter===c?"none":`1px solid ${T.line}`}}>{c==="All"?t("book.all"):t("cat."+c.replace(" ",""))}</div>)}</div><Lbl>{filteredATT.length} {t("book.results")}</Lbl>{filteredATT.map(a=><div key={a.id} onClick={()=>setPreviewAtt(a)} style={{display:"flex",alignItems:"center",gap:12,borderRadius:22,background:"white",border:`1px solid ${myTickets.includes(a.id)?T.ok+"55":T.line}`,padding:12,marginBottom:12,cursor:"pointer",position:"relative"}}>
             <div style={{position:"relative",flexShrink:0}}>
               <img src={a.img} alt={a.title} style={{width:64,height:64,borderRadius:16,objectFit:"cover"}}/>
               {myTickets.includes(a.id)&&<div style={{position:"absolute",bottom:-3,right:-3,width:22,height:22,borderRadius:11,background:T.ok,border:"2px solid white",display:"flex",alignItems:"center",justifyContent:"center"}}><Check size={11} color="white"/></div>}
             </div>
             <div style={{flex:1,minWidth:0}}>
               <div style={{fontSize:14,fontWeight:700}}>{a.title}</div>
-              <div style={{fontSize:12,color:T.inkMute,marginTop:4}}>{a.cat} · {a.dur}{a.skip?" · Skip line":""}</div>
-              <div style={{fontSize:11,color:T.primary,marginTop:6,fontWeight:600,display:"flex",alignItems:"center",gap:3}}>Tap for details<ChevronRight size={11}/></div>
+              <div style={{fontSize:12,color:T.inkMute,marginTop:4}}>{a.cat} · {a.dur}{a.skip?` · ${t("card.skipLine")}`:""}</div>
+              <div style={{fontSize:11,color:T.primary,marginTop:6,fontWeight:600,display:"flex",alignItems:"center",gap:3}}>{t("card.details")}<ChevronRight size={11}/></div>
             </div>
             <div style={{textAlign:"right",flexShrink:0,display:"flex",flexDirection:"column",alignItems:"flex-end",gap:6}}>
               <div style={{fontSize:18,fontWeight:800}}>€{a.price}</div>
               <div style={{display:"flex",gap:5}}>
-                <div onClick={e=>{e.stopPropagation();toggleFav(a.id)}} title="Save to favorites" style={{width:30,height:30,borderRadius:9,background:favs.has(a.id)?T.dangerSoft:"#F1F5F9",display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer"}}><Heart size={13} color={favs.has(a.id)?T.danger:T.inkMute} fill={favs.has(a.id)?T.danger:"none"}/></div>
-                <div onClick={e=>{e.stopPropagation();toggleTicket(a.id)}} title="I have this ticket" style={{width:30,height:30,borderRadius:9,background:myTickets.includes(a.id)?T.okSoft:"#F1F5F9",display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer"}}><Ticket size={13} color={myTickets.includes(a.id)?T.ok:T.inkMute}/></div>
+                <div onClick={e=>{e.stopPropagation();toggleFav(a.id)}} style={{width:30,height:30,borderRadius:9,background:favs.has(a.id)?T.dangerSoft:"#F1F5F9",display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer"}}><Heart size={13} color={favs.has(a.id)?T.danger:T.inkMute} fill={favs.has(a.id)?T.danger:"none"}/></div>
+                <div onClick={e=>{e.stopPropagation();toggleTicket(a.id)}} style={{width:30,height:30,borderRadius:9,background:myTickets.includes(a.id)?T.okSoft:"#F1F5F9",display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer"}}><Ticket size={13} color={myTickets.includes(a.id)?T.ok:T.inkMute}/></div>
               </div>
               {myTickets.includes(a.id)?
-                <div style={{display:"inline-flex",alignItems:"center",gap:3,padding:"5px 10px",borderRadius:9,background:T.okSoft,color:T.ok,fontSize:11,fontWeight:700}}><Check size={11}/>Got it</div>
+                <div style={{display:"inline-flex",alignItems:"center",gap:3,padding:"5px 10px",borderRadius:9,background:T.okSoft,color:T.ok,fontSize:11,fontWeight:700}}><Check size={11}/>{t("btn.gotIt")}</div>
                 :
-                <div onClick={(e)=>{e.stopPropagation();handleBook(a)}} style={{display:"flex",alignItems:"center",gap:4,padding:"6px 14px",borderRadius:10,background:"linear-gradient(135deg,#1D4ED8,#1E40AF)",color:"white",fontSize:12,fontWeight:700,cursor:"pointer"}}>Book</div>
+                <div onClick={(e)=>{e.stopPropagation();handleBook(a)}} style={{display:"flex",alignItems:"center",gap:4,padding:"6px 14px",borderRadius:10,background:"linear-gradient(135deg,#1D4ED8,#1E40AF)",color:"white",fontSize:12,fontWeight:700,cursor:"pointer"}}>{t("card.book")}</div>
               }
             </div>
           </div>)}</div>}
 
           {/* ── EXPLORE — Guide Hub ── */}
-          {tab==="explore"&&!activeGuide&&<div><div style={{display:"flex",alignItems:"center",gap:12,marginBottom:20}}><Bk onClick={()=>goTab("home")}/><div><Lbl>Discover</Lbl><div style={{fontSize:24,fontWeight:800,fontFamily:fd}}>Explore Istanbul</div></div></div><div style={{fontSize:13,color:T.inkSoft,lineHeight:1.6,marginBottom:20}}>Curated guides to help you make the most of your trip.</div>{GUIDES.map(g=><div key={g.id} onClick={()=>g.id==="neighborhoods"?setGuideId("neighborhoods"):setGuideId(g.id)} style={{borderRadius:20,background:"white",border:`1px solid ${T.line}`,padding:"14px 16px",marginBottom:10,display:"flex",alignItems:"center",gap:14,cursor:"pointer"}}><div style={{fontSize:28,width:44,textAlign:"center"}}>{g.emoji}</div><div style={{flex:1}}><div style={{fontSize:15,fontWeight:700}}>{g.title}</div><div style={{fontSize:12,color:T.inkMute,marginTop:2}}>{g.sub}</div></div><ChevronRight size={16} color={T.inkMute}/></div>)}
-            {/* Premium Picks — subtle, göze batmayan */}
-            {!isPremium&&<div onClick={()=>setPremiumOpen(true)} style={{borderRadius:16,background:"#F8FAFC",border:`1px solid ${T.line}`,padding:"12px 16px",marginTop:6,display:"flex",alignItems:"center",gap:10,cursor:"pointer"}}><span style={{fontSize:18}}>✨</span><div style={{flex:1,fontSize:12,color:T.inkSoft}}>More curated picks with <span style={{fontWeight:700,color:T.ink}}>Premium</span></div><span style={{fontSize:10,color:"#C59D5F"}}>🔒</span></div>}
+          {tab==="explore"&&!activeGuide&&<div><div style={{display:"flex",alignItems:"center",gap:12,marginBottom:20}}><Bk onClick={()=>goTab("home")}/><div><Lbl>{t("menu.discover")}</Lbl><div style={{fontSize:24,fontWeight:800,fontFamily:fd}}>{t("explore.title")}</div></div></div><div style={{fontSize:13,color:T.inkSoft,lineHeight:1.6,marginBottom:20}}>{t("explore.subtitle")}</div>{GUIDES.map(g=><div key={g.id} onClick={()=>g.id==="neighborhoods"?setGuideId("neighborhoods"):setGuideId(g.id)} style={{borderRadius:20,background:"white",border:`1px solid ${T.line}`,padding:"14px 16px",marginBottom:10,display:"flex",alignItems:"center",gap:14,cursor:"pointer"}}><div style={{fontSize:28,width:44,textAlign:"center"}}>{g.emoji}</div><div style={{flex:1}}><div style={{fontSize:15,fontWeight:700}}>{t(GUIDE_KEYS[g.id]?.title||"")||g.title}</div><div style={{fontSize:12,color:T.inkMute,marginTop:2}}>{t(GUIDE_KEYS[g.id]?.sub||"")||g.sub}</div></div><ChevronRight size={16} color={T.inkMute}/></div>)}
+            {/* Premium Picks — subtle */}
+            {!isPremium&&<div onClick={()=>setPremiumOpen(true)} style={{borderRadius:16,background:"#F8FAFC",border:`1px solid ${T.line}`,padding:"12px 16px",marginTop:6,display:"flex",alignItems:"center",gap:10,cursor:"pointer"}}><span style={{fontSize:18}}>✨</span><div style={{flex:1,fontSize:12,color:T.inkSoft}}>{t("explore.morePremium")}</div><span style={{fontSize:10,color:"#C59D5F"}}>🔒</span></div>}
           </div>}
 
           {/* Explore — Guide Page */}
           {tab==="explore"&&activeGuide&&activeGuide.id!=="neighborhoods"&&<GuidePage guide={activeGuide} onBack={()=>setGuideId(null)} onPreview={setPreviewAtt} onDetail={setDetailAtt} onFav={toggleFav} favs={favs}/>}
 
           {/* Explore — Neighborhoods */}
-          {tab==="explore"&&guideId==="neighborhoods"&&<div><div style={{display:"flex",alignItems:"center",gap:12,marginBottom:20}}><Bk onClick={()=>setGuideId(null)}/><div><Lbl>Guide</Lbl><div style={{fontSize:24,fontWeight:800,fontFamily:fd}}>Neighborhoods</div></div></div><div style={{fontSize:13,color:T.inkSoft,lineHeight:1.6,marginBottom:20}}>Explore Istanbul district by district.</div>{NEIGHBORHOODS.map(nb=><div key={nb.n} style={{borderRadius:22,background:"white",border:`1px solid ${T.line}`,overflow:"hidden",marginBottom:12}}><div style={{position:"relative",height:100}}><img src={nb.img} alt={nb.n} style={{width:"100%",height:"100%",objectFit:"cover"}}/><div style={{position:"absolute",inset:0,background:"linear-gradient(to top,rgba(15,23,42,0.5),transparent 50%)"}}/><div style={{position:"absolute",bottom:10,left:14,fontSize:16,fontWeight:800,color:"white"}}>{nb.n}</div></div><div style={{padding:"12px 14px",fontSize:12,color:T.inkSoft}}>{nb.d}</div></div>)}</div>}
+          {tab==="explore"&&guideId==="neighborhoods"&&<div><div style={{display:"flex",alignItems:"center",gap:12,marginBottom:20}}><Bk onClick={()=>setGuideId(null)}/><div><Lbl>{t("misc.popular")}</Lbl><div style={{fontSize:24,fontWeight:800,fontFamily:fd}}>{t("explore.neighborhoods")}</div></div></div><div style={{fontSize:13,color:T.inkSoft,lineHeight:1.6,marginBottom:20}}>{t("explore.neighborhoodsSub")}.</div>{NEIGHBORHOODS.map(nb=>{const name=t(nb.nKey);const desc=t(nb.dKey);return<div key={nb.nKey} style={{borderRadius:22,background:"white",border:`1px solid ${T.line}`,overflow:"hidden",marginBottom:12}}><div style={{position:"relative",height:100}}><img src={nb.img} alt={name} style={{width:"100%",height:"100%",objectFit:"cover"}}/><div style={{position:"absolute",inset:0,background:"linear-gradient(to top,rgba(15,23,42,0.5),transparent 50%)"}}/><div style={{position:"absolute",bottom:10,left:14,fontSize:16,fontWeight:800,color:"white"}}>{name}</div></div><div style={{padding:"12px 14px",fontSize:12,color:T.inkSoft}}>{desc}</div></div>})}</div>}
 
           {/* ── TRIP ── */}
           {tab==="trip"&&<div>
             <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:20}}>
               <Bk onClick={()=>goTab("home")}/>
-              <div><Lbl>Your trip</Lbl><div style={{fontSize:24,fontWeight:800,fontFamily:fd}}>Trip Wallet</div></div>
+              <div><Lbl>{t("trip.subtitle")}</Lbl><div style={{fontSize:24,fontWeight:800,fontFamily:fd}}>{t("trip.title")}</div></div>
             </div>
 
             {/* Tab switcher */}
             <div style={{display:"flex",gap:6,background:"#F1F5F9",padding:4,borderRadius:14,marginBottom:20}}>
               <div onClick={()=>setTripTab("favorites")} style={{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:6,padding:"10px 0",borderRadius:10,fontSize:13,fontWeight:700,cursor:"pointer",background:tripTab==="favorites"?"white":"transparent",color:tripTab==="favorites"?T.ink:T.inkMute,boxShadow:tripTab==="favorites"?"0 2px 6px rgba(0,0,0,0.06)":"none"}}>
                 <Heart size={14} color={tripTab==="favorites"?T.danger:T.inkMute} fill={tripTab==="favorites"?T.danger:"none"}/>
-                Favorites <span style={{fontSize:11,fontWeight:600,opacity:0.7}}>({favs.size})</span>
+                {t("trip.favorites")} <span style={{fontSize:11,fontWeight:600,opacity:0.7}}>({favs.size})</span>
               </div>
               <div onClick={()=>setTripTab("tickets")} style={{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:6,padding:"10px 0",borderRadius:10,fontSize:13,fontWeight:700,cursor:"pointer",background:tripTab==="tickets"?"white":"transparent",color:tripTab==="tickets"?T.ink:T.inkMute,boxShadow:tripTab==="tickets"?"0 2px 6px rgba(0,0,0,0.06)":"none"}}>
                 <Ticket size={14} color={tripTab==="tickets"?T.ok:T.inkMute}/>
-                My Tickets <span style={{fontSize:11,fontWeight:600,opacity:0.7}}>({myTickets.length})</span>
+                {t("trip.myTickets")} <span style={{fontSize:11,fontWeight:600,opacity:0.7}}>({myTickets.length})</span>
               </div>
             </div>
 
@@ -736,8 +794,8 @@ export default function IstanbulGo(){
               {favs.size===0?
                 <div style={{textAlign:"center",padding:"40px 20px",background:"white",borderRadius:22,border:`1px solid ${T.line}`}}>
                   <Heart size={32} color={T.line}/>
-                  <div style={{fontSize:14,fontWeight:600,marginTop:12}}>No saved places yet</div>
-                  <div style={{fontSize:12,color:T.inkMute,marginTop:4}}>Tap ♥ on any place to save it here</div>
+                  <div style={{fontSize:14,fontWeight:600,marginTop:12}}>{t("trip.noSaved")}</div>
+                  <div style={{fontSize:12,color:T.inkMute,marginTop:4}}>{t("trip.noSavedSub")}</div>
                 </div>
                 :
                 <div style={{marginBottom:20}}>
@@ -747,10 +805,10 @@ export default function IstanbulGo(){
                       <img src={a.img} alt={a.title} style={{width:52,height:52,borderRadius:14,objectFit:"cover"}}/>
                       <div style={{flex:1}}>
                         <div style={{fontSize:14,fontWeight:700}}>{a.title}</div>
-                        <div style={{fontSize:12,color:T.inkMute,marginTop:2}}>{a.price>0?`€${a.price}`:"Free"}</div>
+                        <div style={{fontSize:12,color:T.inkMute,marginTop:2}}>{a.price>0?`€${a.price}`:t("card.free")}</div>
                       </div>
-                      {myTickets.includes(a.id)&&<div style={{padding:"4px 8px",borderRadius:8,background:"#D1FAE5",color:T.ok,fontSize:10,fontWeight:700,display:"flex",alignItems:"center",gap:3}}><Ticket size={9}/>Got it</div>}
-                      {!myTickets.includes(a.id)&&a.price>0&&a.link&&<div onClick={(e)=>{e.stopPropagation();handleBook(a)}} style={{padding:"8px 14px",borderRadius:12,background:"linear-gradient(135deg,#1D4ED8,#1E40AF)",color:"white",fontSize:12,fontWeight:700,cursor:"pointer"}}>Book</div>}
+                      {myTickets.includes(a.id)&&<div style={{padding:"4px 8px",borderRadius:8,background:"#D1FAE5",color:T.ok,fontSize:10,fontWeight:700,display:"flex",alignItems:"center",gap:3}}><Ticket size={9}/>{t("btn.gotIt")}</div>}
+                      {!myTickets.includes(a.id)&&a.price>0&&a.link&&<div onClick={(e)=>{e.stopPropagation();handleBook(a)}} style={{padding:"8px 14px",borderRadius:12,background:"linear-gradient(135deg,#1D4ED8,#1E40AF)",color:"white",fontSize:12,fontWeight:700,cursor:"pointer"}}>{t("card.book")}</div>}
                     </div>
                   )}
                 </div>
@@ -761,13 +819,13 @@ export default function IstanbulGo(){
             {tripTab==="tickets"&&<>
               {/* Search to add tickets */}
               <div style={{marginBottom:14}}>
-                <div style={{fontSize:10,fontWeight:700,color:T.inkMute,textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:8}}>Add a ticket you already have</div>
+                <div style={{fontSize:10,fontWeight:700,color:T.inkMute,textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:8}}>{t("trip.addTicket")}</div>
                 <div style={{display:"flex",alignItems:"center",gap:10,background:"white",border:`1px solid ${T.line}`,padding:"12px 14px",borderRadius:14}}>
                   <Search size={16} color={T.inkMute}/>
                   <input
                     value={ticketSearch}
                     onChange={(e)=>setTicketSearch(e.target.value)}
-                    placeholder="Search Hagia Sophia, Topkapi..."
+                    placeholder={t("trip.searchTicket")}
                     style={{flex:1,border:"none",outline:"none",background:"transparent",fontSize:14,color:T.ink,fontFamily:fi}}
                   />
                   {ticketSearch&&<div onClick={()=>setTicketSearch("")} style={{width:20,height:20,borderRadius:10,background:"#F1F5F9",display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer"}}><X size={11} color={T.inkSoft}/></div>}
@@ -777,7 +835,7 @@ export default function IstanbulGo(){
                 {ticketSearch&&(()=>{
                   const ql=ticketSearch.toLowerCase().trim();
                   const results=ATT.filter(a=>a.price>0&&a.link&&!myTickets.includes(a.id)&&[a.title,a.cat,a.area].join(" ").toLowerCase().includes(ql)).slice(0,5);
-                  if(results.length===0)return<div style={{marginTop:8,padding:"14px",fontSize:12,color:T.inkMute,textAlign:"center"}}>No matches found</div>;
+                  if(results.length===0)return<div style={{marginTop:8,padding:"14px",fontSize:12,color:T.inkMute,textAlign:"center"}}>{t("misc.noMatches")}</div>;
                   return(
                     <div style={{marginTop:8,background:"white",border:`1px solid ${T.line}`,borderRadius:14,overflow:"hidden"}}>
                       {results.map((a,i)=>
@@ -799,28 +857,56 @@ export default function IstanbulGo(){
               {myTickets.length===0?
                 <div style={{textAlign:"center",padding:"40px 20px",background:"white",borderRadius:22,border:`1px solid ${T.line}`}}>
                   <Ticket size={32} color={T.line}/>
-                  <div style={{fontSize:14,fontWeight:600,marginTop:12}}>No tickets yet</div>
-                  <div style={{fontSize:12,color:T.inkMute,marginTop:4,lineHeight:1.5,padding:"0 20px"}}>Search above to add tickets you already have, or tap "Got it" on plan cards</div>
+                  <div style={{fontSize:14,fontWeight:600,marginTop:12}}>{t("trip.noTickets")}</div>
+                  <div style={{fontSize:12,color:T.inkMute,marginTop:4,lineHeight:1.5,padding:"0 20px"}}>{t("trip.noTicketsSub")}</div>
                 </div>
                 :
                 <div style={{marginBottom:20}}>
-                  <div style={{fontSize:10,fontWeight:700,color:T.inkMute,textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:8}}>Your tickets ({myTickets.length})</div>
-                  {ATT.filter(a=>myTickets.includes(a.id)).map(a=>
-                    <div key={a.id} onClick={()=>setPreviewAtt(a)} style={{display:"flex",alignItems:"center",gap:12,borderRadius:20,background:"white",border:`1px solid ${T.ok}30`,padding:12,marginBottom:10,cursor:"pointer",position:"relative"}}>
-                      <div onClick={(e)=>{e.stopPropagation();toggleTicket(a.id)}} style={{position:"absolute",top:-6,right:-6,width:22,height:22,borderRadius:11,background:T.ink,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",boxShadow:"0 2px 6px rgba(0,0,0,0.15)"}}><X size={11} color="white"/></div>
-                      <div style={{position:"relative",flexShrink:0}}>
-                        <img src={a.img} alt={a.title} style={{width:52,height:52,borderRadius:14,objectFit:"cover"}}/>
-                        <div style={{position:"absolute",bottom:-3,right:-3,width:20,height:20,borderRadius:10,background:T.ok,border:"2px solid white",display:"flex",alignItems:"center",justifyContent:"center"}}><Check size={10} color="white"/></div>
-                      </div>
-                      <div style={{flex:1}}>
-                        <div style={{fontSize:14,fontWeight:700}}>{a.title}</div>
-                        <div style={{fontSize:11,color:T.inkMute,marginTop:2}}>{a.cat} · €{a.price}</div>
-                        <div style={{display:"inline-flex",alignItems:"center",gap:3,marginTop:5,padding:"2px 8px",borderRadius:6,background:T.okSoft,fontSize:10,fontWeight:700,color:T.ok}}>
-                          <Ticket size={9}/>Ticket ready
+                  <div style={{fontSize:10,fontWeight:700,color:T.inkMute,textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:8}}>{t("trip.yourTickets")} ({myTickets.length})</div>
+                  {ATT.filter(a=>myTickets.includes(a.id)).map(a=>{
+                    const timed=timedTickets[a.id];
+                    return(
+                    <div key={a.id} style={{borderRadius:20,background:"white",border:`1px solid ${T.ok}30`,padding:12,marginBottom:10,position:"relative"}}>
+                      <div onClick={()=>setPreviewAtt(a)} style={{display:"flex",alignItems:"center",gap:12,cursor:"pointer"}}>
+                        <div onClick={(e)=>{e.stopPropagation();toggleTicket(a.id)}} style={{position:"absolute",top:-6,right:-6,width:22,height:22,borderRadius:11,background:T.ink,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",boxShadow:"0 2px 6px rgba(0,0,0,0.15)",zIndex:2}}><X size={11} color="white"/></div>
+                        <div style={{position:"relative",flexShrink:0}}>
+                          <img src={a.img} alt={a.title} style={{width:52,height:52,borderRadius:14,objectFit:"cover"}}/>
+                          <div style={{position:"absolute",bottom:-3,right:-3,width:20,height:20,borderRadius:10,background:T.ok,border:"2px solid white",display:"flex",alignItems:"center",justifyContent:"center"}}><Check size={10} color="white"/></div>
+                        </div>
+                        <div style={{flex:1,minWidth:0}}>
+                          <div style={{fontSize:14,fontWeight:700}}>{a.title}</div>
+                          <div style={{fontSize:11,color:T.inkMute,marginTop:2}}>{a.cat} · €{a.price}</div>
+                          <div style={{display:"inline-flex",alignItems:"center",gap:3,marginTop:5,padding:"2px 8px",borderRadius:6,background:T.okSoft,fontSize:10,fontWeight:700,color:T.ok}}>
+                            <Ticket size={9}/>{t("trip.ticketReady")}
+                          </div>
                         </div>
                       </div>
+                      {/* Add date & time row */}
+                      <div onClick={()=>{
+                        if(!isPremium){setPremiumOpen(true);return}
+                        setTimedTicketSheet(a.id);
+                      }} style={{marginTop:10,padding:"10px 12px",borderRadius:12,background:timed?"#EEF2FF":"#F8FAFC",border:`1px dashed ${timed?T.primary:T.line}`,cursor:"pointer",display:"flex",alignItems:"center",gap:10}}>
+                        <div style={{width:28,height:28,borderRadius:8,background:timed?T.primarySoft:"#F1F5F9",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+                          <Clk size={14} color={timed?T.primary:T.inkMute}/>
+                        </div>
+                        <div style={{flex:1,minWidth:0}}>
+                          {timed?
+                            <>
+                              <div style={{fontSize:12,fontWeight:700,color:T.primary}}>{new Date(timed.date).toLocaleDateString(lang==="ar"?"ar-SA":lang,{weekday:"short",month:"short",day:"numeric"})} · {timed.time}</div>
+                              <div style={{fontSize:10,color:T.inkMute,marginTop:1}}>{t("trip.editSlot")}</div>
+                            </>
+                            :
+                            <>
+                              <div style={{fontSize:12,fontWeight:700,color:T.inkSoft}}>{t("trip.addDateTime")} {!isPremium&&"🔒"}</div>
+                              <div style={{fontSize:10,color:T.inkMute,marginTop:1}}>{isPremium?t("trip.addDateTimeSub"):t("trip.addDateTimePremium")}</div>
+                            </>
+                          }
+                        </div>
+                        {timed&&<div onClick={(e)=>{e.stopPropagation();removeTimedTicket(a.id)}} style={{padding:"4px 8px",borderRadius:6,background:"white",fontSize:10,color:T.danger,fontWeight:700,cursor:"pointer"}}>{t("btn.clear")}</div>}
+                      </div>
                     </div>
-                  )}
+                    );
+                  })}
 
                   {/* Premium upsell: timed tickets */}
                   {!isPremium&&myTickets.length>0&&
@@ -829,8 +915,8 @@ export default function IstanbulGo(){
                       <div style={{position:"relative",display:"flex",alignItems:"center",gap:12}}>
                         <div style={{width:42,height:42,borderRadius:14,background:"rgba(197,157,95,0.2)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,fontSize:20}}>⏰</div>
                         <div style={{flex:1}}>
-                          <div style={{fontSize:13,fontWeight:700}}>Add dates & times to your tickets</div>
-                          <div style={{fontSize:11,color:"rgba(255,255,255,0.55)",marginTop:2}}>Premium auto-builds a route around your time slots</div>
+                          <div style={{fontSize:13,fontWeight:700}}>{t("trip.premiumTeaser")}</div>
+                          <div style={{fontSize:11,color:"rgba(255,255,255,0.55)",marginTop:2}}>{t("trip.premiumTeaserSub")}</div>
                         </div>
                         <span style={{fontSize:11,color:T.gold}}>🔒</span>
                       </div>
@@ -848,6 +934,25 @@ export default function IstanbulGo(){
         {/* INSTALL PROMPT */}
         <InstallPrompt/>
 
+        {/* TIMED TICKET SHEET */}
+        {timedTicketSheet&&<TimedTicketSheet
+          attraction={ATT.find(a=>a.id===timedTicketSheet)}
+          existing={timedTickets[timedTicketSheet]}
+          onClose={()=>setTimedTicketSheet(null)}
+          onSave={(id,date,time)=>{
+            const updatedTimed={...timedTickets,[id]:{date,time}};
+            setTimedTickets(updatedTimed);
+            localStorage.setItem("timedTickets",JSON.stringify(updatedTimed));
+            setTimedTicketSheet(null);
+            if(planResult&&planDays){
+              const newPlan=generatePlan({days:planDays,pace:planPace||"balanced",interests:planInterests||[],timedTickets:updatedTimed,tripStartDate});
+              setPlanResult(newPlan);
+              // Plan sekmesine geç ki kullanıcı değişikliği görsün
+              setTimeout(()=>goTab("plan"),300);
+            }
+          }}
+        />}
+
         {/* HAMBURGER MENU — inside frame */}
         {menuOpen && (
           <div style={{position:"absolute",inset:0,zIndex:300,overflow:"hidden"}}>
@@ -861,8 +966,8 @@ export default function IstanbulGo(){
                     {user?<span style={{fontSize:18,fontWeight:800,color:"#BFDBFE"}}>{(user.name||user.email||"U")[0].toUpperCase()}</span>:<User size={22} color="rgba(255,255,255,0.6)"/>}
                   </div>
                   <div style={{flex:1,minWidth:0}}>
-                    <div style={{fontSize:15,fontWeight:800,fontFamily:fd}}>{user?(user.name||"Welcome back"):"Sign in"}</div>
-                    <div style={{fontSize:11,color:"rgba(255,255,255,0.55)",marginTop:2,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{user?user.email:"Save your trip across devices"}</div>
+                    <div style={{fontSize:15,fontWeight:800,fontFamily:fd}}>{user?(user.name||t("menu.welcomeBack")):t("menu.signIn")}</div>
+                    <div style={{fontSize:11,color:"rgba(255,255,255,0.55)",marginTop:2,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{user?user.email:t("menu.signInSub")}</div>
                     {isPremium&&<div style={{marginTop:5,display:"inline-flex",alignItems:"center",gap:4,padding:"2px 8px",borderRadius:99,background:"rgba(197,157,95,0.2)",fontSize:9,fontWeight:700,color:T.gold}}>✨ PREMIUM</div>}
                   </div>
                   <ChevronRight size={16} color="rgba(255,255,255,0.4)"/>
@@ -870,15 +975,15 @@ export default function IstanbulGo(){
               </div>
 
               {/* DISCOVER — Guides */}
-              <div style={{padding:"16px 20px 6px",fontSize:10,fontWeight:700,color:T.inkMute,textTransform:"uppercase",letterSpacing:"0.12em"}}>Discover</div>
+              <div style={{padding:"16px 20px 6px",fontSize:10,fontWeight:700,color:T.inkMute,textTransform:"uppercase",letterSpacing:"0.12em"}}>{t("menu.discover")}</div>
               {GUIDES.map(g=>(
                 <div key={g.id} onClick={()=>{setMenuOpen(false);setTimeout(()=>{goTab("explore");setGuideId(g.id)},200)}} style={{display:"flex",alignItems:"center",gap:12,padding:"10px 20px",cursor:"pointer"}}>
                   <div style={{width:32,height:32,borderRadius:10,background:"#F1F5F9",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
                     <Compass size={16} color={T.inkSoft}/>
                   </div>
                   <div style={{flex:1,minWidth:0}}>
-                    <div style={{fontSize:13,fontWeight:700,color:T.ink}}>{g.title}</div>
-                    <div style={{fontSize:10,color:T.inkMute,marginTop:1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{g.sub}</div>
+                    <div style={{fontSize:13,fontWeight:700,color:T.ink}}>{t(GUIDE_KEYS[g.id]?.title||"")||g.title}</div>
+                    <div style={{fontSize:10,color:T.inkMute,marginTop:1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{t(GUIDE_KEYS[g.id]?.sub||"")||g.sub}</div>
                   </div>
                   <ChevronRight size={14} color={T.inkMute}/>
                 </div>
@@ -887,12 +992,12 @@ export default function IstanbulGo(){
               <div style={{height:1,background:T.line,margin:"6px 20px"}}/>
 
               {/* ESSENTIALS */}
-              <div style={{padding:"12px 20px 6px",fontSize:10,fontWeight:700,color:T.inkMute,textTransform:"uppercase",letterSpacing:"0.12em"}}>Essentials</div>
+              <div style={{padding:"12px 20px 6px",fontSize:10,fontWeight:700,color:T.inkMute,textTransform:"uppercase",letterSpacing:"0.12em"}}>{t("menu.essentials")}</div>
               {[
-                {Icon:Ticket,title:"Tickets & Tours",sub:"Browse all bookings",action:()=>goTab("book"),color:"#BE185D",bg:"#FCE7F3"},
-                {Icon:Train,title:"Public Transport",sub:"Metro, tram, ferry",action:()=>setTransOpen(true),color:T.ok,bg:T.okSoft},
-                {Icon:Smartphone,title:"eSIM & Data",sub:"Stay connected",action:()=>setEsimOpen(true),color:"#6D28D9",bg:"#EDE9FE"},
-                {Icon:Sparkles,title:"Smart Plan",sub:"Build your itinerary",action:()=>goTab("plan"),color:T.primary,bg:T.primarySoft},
+                {Icon:Ticket,title:t("menu.ticketsTours"),sub:t("menu.ticketsToursSub"),action:()=>goTab("book"),color:"#BE185D",bg:"#FCE7F3"},
+                {Icon:Train,title:t("menu.publicTransport"),sub:t("menu.publicTransportSub"),action:()=>setTransOpen(true),color:T.ok,bg:T.okSoft},
+                {Icon:Smartphone,title:t("menu.esimData"),sub:t("menu.esimDataSub"),action:()=>setEsimOpen(true),color:"#6D28D9",bg:"#EDE9FE"},
+                {Icon:Sparkles,title:t("home.smartPlan"),sub:t("menu.buildItinerary"),action:()=>goTab("plan"),color:T.primary,bg:T.primarySoft},
               ].map(item=>(
                 <div key={item.title} onClick={()=>{setMenuOpen(false);setTimeout(item.action,200)}} style={{display:"flex",alignItems:"center",gap:12,padding:"10px 20px",cursor:"pointer"}}>
                   <div style={{width:32,height:32,borderRadius:10,background:item.bg,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
@@ -909,13 +1014,13 @@ export default function IstanbulGo(){
               <div style={{height:1,background:T.line,margin:"6px 20px"}}/>
 
               {/* KNOW BEFORE YOU GO */}
-              <div style={{padding:"12px 20px 6px",fontSize:10,fontWeight:700,color:T.inkMute,textTransform:"uppercase",letterSpacing:"0.12em"}}>Know before you go</div>
+              <div style={{padding:"12px 20px 6px",fontSize:10,fontWeight:700,color:T.inkMute,textTransform:"uppercase",letterSpacing:"0.12em"}}>{t("menu.knowBefore")}</div>
               {[
-                {Icon:Plane,title:"Airport Guide",sub:"Transfers & arrivals",action:()=>setInfoPage("airport"),color:T.primary,bg:T.primarySoft},
-                {Icon:Wallet,title:"Money & Payments",sub:"Currency, ATMs",action:()=>setInfoPage("money"),color:T.ok,bg:T.okSoft},
-                {Icon:Languages,title:"Turkish Phrases",sub:"Essentials to use",action:()=>setInfoPage("phrases"),color:"#BE185D",bg:"#FCE7F3"},
-                {Icon:ShieldCheck,title:"Safety & Scams",sub:"Street smarts",action:()=>setInfoPage("safety"),color:T.danger,bg:T.dangerSoft},
-                {Icon:Globe,title:"Live City Info",sub:"Weather & updates",action:()=>setInfoPage("live"),color:T.warn,bg:T.warnSoft},
+                {Icon:Plane,title:t("info.airport"),sub:t("info.airportSub"),action:()=>setInfoPage("airport"),color:T.primary,bg:T.primarySoft},
+                {Icon:Wallet,title:t("info.money"),sub:t("info.moneySub"),action:()=>setInfoPage("money"),color:T.ok,bg:T.okSoft},
+                {Icon:Languages,title:t("info.phrases"),sub:t("info.phrasesSub"),action:()=>setInfoPage("phrases"),color:"#BE185D",bg:"#FCE7F3"},
+                {Icon:ShieldCheck,title:t("info.safety"),sub:t("info.safetySub"),action:()=>setInfoPage("safety"),color:T.danger,bg:T.dangerSoft},
+                {Icon:Globe,title:t("info.live"),sub:t("info.liveSub"),action:()=>setInfoPage("live"),color:T.warn,bg:T.warnSoft},
               ].map(item=>(
                 <div key={item.title} onClick={()=>{setMenuOpen(false);setTimeout(()=>{goTab("home");item.action()},200)}} style={{display:"flex",alignItems:"center",gap:12,padding:"10px 20px",cursor:"pointer"}}>
                   <div style={{width:32,height:32,borderRadius:10,background:item.bg,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
@@ -936,8 +1041,8 @@ export default function IstanbulGo(){
                   <div onClick={()=>{setMenuOpen(false);setTimeout(()=>setPremiumOpen(true),200)}} style={{margin:"10px 20px 24px",borderRadius:16,background:`linear-gradient(135deg,${T.dark},#1D4ED8)`,padding:14,cursor:"pointer",color:"white",display:"flex",alignItems:"center",gap:12}}>
                     <div style={{width:38,height:38,borderRadius:12,background:"rgba(197,157,95,0.2)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}><Sparkles size={18} color={T.gold}/></div>
                     <div style={{flex:1}}>
-                      <div style={{fontSize:12,fontWeight:800}}>Upgrade to Premium</div>
-                      <div style={{fontSize:10,color:"rgba(255,255,255,0.65)",marginTop:2}}>AI routing · crowd alerts</div>
+                      <div style={{fontSize:12,fontWeight:800}}>{t("menu.upgradePremium")}</div>
+                      <div style={{fontSize:10,color:"rgba(255,255,255,0.65)",marginTop:2}}>{t("menu.upgradeSub")}</div>
                     </div>
                     <div style={{fontSize:11,fontWeight:700,color:T.gold}}>€4.99</div>
                   </div>
